@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Add, Logout, Person, Search } from "@mui/icons-material";
+import { QuestionAnswer, Logout, Person, Search } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import { SignOutButton, SignedIn, UserButton, useUser } from "@clerk/nextjs";
 import Link from "next/link";
@@ -52,9 +52,9 @@ const TopBar = () => {
 
       <button
         className="create-post-btn"
-        onClick={() => router.push("/create-post")}
+        onClick={() => router.push("/chats")}
       >
-        <Add /> <p>Create A Post</p>
+        <QuestionAnswer/> <p>Chats</p>
       </button>
 
       <div className="flex gap-4 md:hidden">

@@ -1,0 +1,18 @@
+.custom::-webkit-scrollbar {
+    width: 5px;
+    border-radius: 50px;
+  }
+  
+  .custom::-webkit-scrollbar-track {
+    background: #1f2937; /* Track background color */
+  }
+  
+  .custom::-webkit-scrollbar-thumb {
+    background: #1f2937; /* Scrollbar thumb color */
+  }
+  
+  .custom::-webkit-scrollbar-thumb:hover {
+    border-radius: 50px;
+    background: #555; /* Scrollbar thumb color on hover */
+  }
+  

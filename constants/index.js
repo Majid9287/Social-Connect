@@ -37,7 +37,7 @@ export const sidebarLinks = [
 export const pageTitles = [
   {
     url: "/",
-    title: "Feed",
+    title: "",
   },
   {
     url: "/edit-profile",
