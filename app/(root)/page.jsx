@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from 'next/navigation'
+import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { FilterAlt, MapsUgc } from "@mui/icons-material";
 import StoryCard from "@components/cards/StoryCard";
@@ -11,7 +11,7 @@ import { useUser } from "@clerk/nextjs";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-import Link from 'next/link';
+import Link from "next/link";
 
 const Home = () => {
   const { user, isLoaded } = useUser();
@@ -83,10 +83,7 @@ const Home = () => {
             Stories
           </h1>
           <div className="mr-4">
-            <button
-              className="w-12 h-12 text-5xl"
-              onClick={handleFilterClick}
-            >
+            <button className="w-12 h-12 text-5xl" onClick={handleFilterClick}>
               <di className="flex rela">
                 <FilterAlt className="w-12 h-16 text-white" />
                 Filter
@@ -124,41 +121,57 @@ const Home = () => {
           </div>
         </div>
 
-        <div className="">
-          <Slider {...slickSettings} className="">
-            <div className="">
-              <button
-                onClick={handelClick}
-                className=" text-black bg-white  py-14 px-2 my-1 rounded-lg w-full"
-              >
-                <MapsUgc /> New story
-              </button>{" "}
-            </div>
+        <div
+          className="flex gap-2 overflow-x-auto mx-auto content-noscroll"
+          style={{
+            scrollbarWidth: "thin",
+            "&::-webkit-scrollbar": {
+              width: "5px",
+              height: "5px",
+              borderRadius: "50px",
+            },
+            "&::-webkit-scrollbar-thumb": {
+              backgroundColor: "rgba(0, 0, 0, 0.3)",
+              borderRadius: "50px",
+            },
+            "&::-webkit-scrollbar-track": {
+              backgroundColor: "rgba(0, 0, 0, 0.1)",
+              borderRadius: "50px",
+            },
+          }}
+        >
+          <div className="flex justify-center items-center">
+            <button
+              onClick={handelClick}
+              className=" text-black bg-white   p-6 rounded-full w-full"
+            >
+              <MapsUgc />
+            </button>{" "}
+          </div>
+          <div className="flex  gap-2">
             {feedStory.map((story, index) => (
-              <div className="p-1">
-                <StoryCard
-                  key={story._id}
-                  link={story._id}
-                  userImage={story.author.profilePhoto}
-                  userName={story.author.username}
-                  date={story.createdAt}
-                  title={story.title}
-                  totalContributions={story.contributions.length}
-                  totalLikes={story.liked}
-                  totalViews={story.totalViews}
-                />
-              </div>
-            ))}
-            {feedStory.length > 9 && (
-              <div className="flex justify-center items-center my-12">
-                <Link href="/story">
-                  <button className="text-black px-2 rounded-lg bg-white">
-                    VIEW ALL
-                  </button>
-                </Link>
-              </div>
-            )}
-          </Slider>
+              <StoryCard
+                key={story._id}
+                link={story._id}
+                userImage={story.author.profilePhoto}
+                userName={story.author.username}
+                date={story.createdAt}
+                title={story.title}
+                totalContributions={story.contributions.length}
+                totalLikes={story.liked}
+                totalViews={story.totalViews}
+              />
+            ))}{" "}
+          </div>
+          {feedStory.length > 9 && (
+            <div className="flex justify-center items-center ">
+              <Link href="/story">
+                <button className="text-black px-4 rounded-lg bg-white">
+                  VIEW ALL
+                </button>
+              </Link>
+            </div>
+          )}
         </div>
       </section>
       <h1 className="mb-2 text-heading2-bold max-sm:text-heading3-bold text-light-1">
@@ -180,4 +193,3 @@ const Home = () => {
 };
 
 export default Home;
-

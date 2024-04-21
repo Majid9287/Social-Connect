@@ -20,7 +20,7 @@ const StoryCard = ({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-4 mb-4 w-64" onClick={handleClick}>
+    <div className="bg-white rounded-lg shadow-md p-4 mb-4 w-64 inline-block" onClick={handleClick}>
       <div className="flex text-black items-center mb-2 justify-between">
         <div className="flex justify-center text-center">
           {" "}

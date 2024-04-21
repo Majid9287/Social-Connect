@@ -17,8 +17,8 @@ const MainContainer = ({ children }) => {
   const title = pageTitles.find((page) => page.url === firstPath)?.title || "";
 
   return (
-    <section className="flex flex-col flex-1 max-w-3xl 2xl:max-w-5xl px-2 md:px-10 lg:px-2 xl:px-20">
-      <TopBar />
+    <section className="flex flex-col flex-1 w-screen md:w-1/2  2xl:max-w-5xl md:px-10 lg:px-2 xl:px-20">
+     <div className="mx-2"><TopBar />
     
       <div className="mt-6 mb-20">
         <h1 className="mb-5 text-heading2-bold max-sm:text-heading3-bold text-light-1">
@@ -27,7 +27,7 @@ const MainContainer = ({ children }) => {
         <div className="min-h-screen overflow-y-scroll custom-scrollbar">
           {children}
         </div>
-      </div>
+      </div></div> 
     </section>
   );
 };
