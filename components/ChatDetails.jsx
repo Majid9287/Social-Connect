@@ -14,8 +14,6 @@ const ChatDetails = ({ chatId }) => {
   const [chat, setChat] = useState({});
   const [otherMembers, setOtherMembers] = useState([]);
 
-  
-
   const [text, setText] = useState("");
 
   const { user, isLoaded } = useUser();
@@ -58,6 +56,7 @@ const ChatDetails = ({ chatId }) => {
 
   const sendText = async () => {
     try {
+      if(text!=""){
       const res = await fetch("/api/messages", {
         method: "POST",
         headers: {
@@ -73,7 +72,7 @@ const ChatDetails = ({ chatId }) => {
       if (res.ok) {
         setText("");
         getChatDetails();
-      }
+      }}
     } catch (err) {
       console.log(err);
     }
@@ -81,6 +80,7 @@ const ChatDetails = ({ chatId }) => {
 
   const sendPhoto = async (result) => {
     try {
+      if(photo!=""){
       const res = await fetch("/api/messages", {
         method: "POST",
         headers: {
@@ -91,12 +91,12 @@ const ChatDetails = ({ chatId }) => {
           currentUserId: userData._id,
           photo: result?.info?.secure_url,
         }),
-        
       });
       if (res.ok) {
         setText("");
         getChatDetails();
       }
+    }
     } catch (err) {
       console.log(err);
     }
@@ -136,7 +136,7 @@ const ChatDetails = ({ chatId }) => {
     <Loader />
   ) : (
     <div className="pb-20">
-      <div className="min-h-screen flex flex-col bg-white rounded-2xl">
+      <div className="h-[calc(100vh-40px)] flex flex-col bg-white rounded-2xl">
         <div className="flex items-center gap-4 px-8 py-3 text-body-bold">
           {chat?.isGroup ? (
             <>
@@ -169,48 +169,49 @@ const ChatDetails = ({ chatId }) => {
           )}
         </div>
 
-        <div className="flex-1 flex flex-col gap-5 bg-grey-2 p-5 overflow-y-scroll custom-scrollbar">
+        <div className="flex-1 mb-4 flex flex-col gap-5 bg-grey-2 p-5 overflow-y-scroll custom-scrollbar">
           {chat?.messages?.map((message, index) => (
-            <MessageBox
-              key={index}
-              message={message}
-              currentUser={userData}
-            />
+            <MessageBox key={index} message={message} currentUser={userData} />
           ))}
           <div ref={bottomRef} />
         </div>
-<div className=" fixed md:relative bottom-14 md:bottom-auto">
-        <div className="w-full flex items-center justify-between px-6 md:px-7 py-3 rounded-3xl cursor-pointer bg-white">
-          <div className="flex items-center gap-4">
-            <CldUploadButton
-              options={{ maxFiles: 1 }}
-              onUpload={sendPhoto}
-              uploadPreset="p3mzao3a"
-            >
-              <AddPhotoAlternate
-                sx={{
-                  fontSize: "35px",
-                  color: "#737373",
-                  cursor: "pointer",
-                  "&:hover": { color: "red" },
-                }}
+        <div className=" fixed md:relative bottom-14 md:bottom-auto ">
+          <div className="w-full flex items-center justify-between px-6 md:px-7 py-3 rounded-3xl cursor-pointer bg-white">
+            <div className="flex items-center gap-4">
+              <CldUploadButton
+                options={{ maxFiles: 1 }}
+                onUpload={sendPhoto}
+                uploadPreset="p3mzao3a"
+              >
+                <AddPhotoAlternate
+                  sx={{
+                    fontSize: "35px",
+                    color: "#737373",
+                    cursor: "pointer",
+                    "&:hover": { color: "red" },
+                  }}
+                />
+              </CldUploadButton>
+
+              <input
+                type="text"
+                placeholder="Write a message..."
+                className="w-[300px] max-sm:w-full bg-transparent outline-none"
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                required
               />
-            </CldUploadButton>
+            </div>
 
-            <input
-              type="text"
-              placeholder="Write a message..."
-              className="w-[300px] max-sm:w-full bg-transparent outline-none"
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              required
-            />
+            <div onClick={sendText}>
+              <img
+                src="/assets/send.jpg"
+                alt="send"
+                className="w-10 h-10 rounded-full hover:scale-125 ease-in-out duration-300"
+              />
+            </div>
           </div>
-
-          <div onClick={sendText}>
-            <img src="/assets/send.jpg" alt="send" className="w-10 h-10 rounded-full hover:scale-125 ease-in-out duration-300" />
-          </div>
-        </div></div>
+        </div>
       </div>
     </div>
   );
