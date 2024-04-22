@@ -210,6 +210,13 @@ const Home = () => {
       console.error("Error showing contribution:", error);
     }
   };
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const day = date.getDate().toString().padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
   return loading ? (
     <Loader />
   ) : (
@@ -238,7 +245,7 @@ const Home = () => {
                         </div>
                         <div>
                           <p className="md:text-xs text-gray-500 truncate">
-                            {Data.createdAt}
+                          {formatDate(Data.createdAt)}
                           </p>
                         </div>
                       </div>
@@ -252,13 +259,14 @@ const Home = () => {
                         <div className=" items-center">
                           <ThumbUpOffAlt className="text-red-500" />
                           <p className="text-xs text-gray-500">
-                            {Data.totalViews}
+                          {Data.liked.length}
                           </p>
                         </div>
                         <div className="items-center">
                           <Visibility className="text-blue-500" />
                           <p className="text-xs text-gray-500">
-                            {Data.liked.length}
+                            
+                            {Data.totalViews}
                           </p>
                         </div>
                         <div className=" items-center">
@@ -305,7 +313,7 @@ const Home = () => {
                 <section className=" border-t-2">
                   <div className="">
                     <div className="mx-auto flex">
-                      <div className=" sm:w-2/6 md:w-1/4 pb-4 px-2 pt-2">
+                      <div className=" sm:w-1/6 md:w-1/4 pb-4 px-2 pt-2">
                         <div className="text-black ">
                           <div className="flex ">
                             {" "}
@@ -322,7 +330,8 @@ const Home = () => {
                           </div>
                           <div>
                             <p className="md:text-xs text-gray-500 truncate">
-                              {story.createdAt}
+                              
+                              {formatDate(story.createdAt)}
                             </p>
                           </div>
                         </div>
@@ -389,7 +398,7 @@ const Home = () => {
                           </div>
                         </div>
                       </div>
-                      <div className="sm:w-4/6 md:w-3/4 border-l-2 p-1 pt-2">
+                      <div className="sm:w-5/6 md:w-3/4 border-l-2 p-1 pt-2">
                         <p>{story.content}</p>
                       </div>
                     </div>
