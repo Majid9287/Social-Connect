@@ -37,22 +37,12 @@ const Home = () => {
   const getdata = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/story/${id}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      if (!response.ok) {
-        throw new Error("Failed to fetch data");
-      }
+      const response = await fetch(`/api/story/${id}`);
       const data = await response.json();
       setData(data);
-      setLoading(false);
     } catch (error) {
       console.error("Error fetching data:", error);
-      // Handle error state or display an error message
-      setLoading(false);
+      
     }
   };
   useEffect(() => {
