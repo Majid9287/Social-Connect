@@ -19,10 +19,11 @@ import {
 import Link from "next/link";
 
 const Home = () => {
+  const { id } = useParams();
   const { user, isLoaded } = useUser();
   const [userData, setUserData] = useState({});
   const [loading, setLoading] = useState(true);
-  const { id } = useParams();
+  
   const [Data, setData] = useState(null);
   const [contributions, setContributions] = useState([]);
   const [showInput, setShowInput] = useState(false);
