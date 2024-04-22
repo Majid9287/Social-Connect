@@ -33,11 +33,36 @@ const Home = () => {
   const [contributionID,setcontributionID] = useState(null);
   const [isEditing, setIsEditing] = useState(false); // State to track if the contribution is being edited
   const [editedContent, setEditedContent] = useState("");
+
+  const getdata = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/story/${id}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (!response.ok) {
+        throw new Error("Failed to fetch data");
+      }
+      const data = await response.json();
+      setData(data);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      // Handle error state or display an error message
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
+    getdata();
+  }, [id]);  
+  
   const getUser = async () => {
     const response = await fetch(`/api/user/${user.id}`);
     const data = await response.json();
     setUserData(data);
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -45,21 +70,7 @@ const Home = () => {
       getUser();
     }
   }, [user]);
-  const getdata = async () => {
-    const response = await fetch(`/api/story/${id}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-    const data = await response.json();
-    setData(data);
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    getdata();
-  }, [id]);
+  
   const editDropdown = () => {
     // Receive the index of the clicked card
     setEditdropdown(!editdropdown); // Set the dropdown state for the clicked card
