@@ -1,4 +1,5 @@
 "use client";
+
 import { useUser } from "@clerk/nextjs";
 import { useParams } from "next/navigation";
 import Loader from "@components/Loader";
