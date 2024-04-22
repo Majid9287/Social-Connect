@@ -80,7 +80,7 @@ const ChatDetails = ({ chatId }) => {
 
   const sendPhoto = async (result) => {
     try {
-      if(photo!=""){
+     
       const res = await fetch("/api/messages", {
         method: "POST",
         headers: {
@@ -95,7 +95,7 @@ const ChatDetails = ({ chatId }) => {
       if (res.ok) {
         setText("");
         getChatDetails();
-      }
+      
     }
     } catch (err) {
       console.log(err);
