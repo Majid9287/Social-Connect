@@ -136,7 +136,7 @@ const ChatDetails = ({ chatId }) => {
     <Loader />
   ) : (
     <div className="pb-20">
-      <div className="h-screen flex flex-col bg-white rounded-2xl">
+      <div className="min-h-screen flex flex-col bg-white rounded-2xl">
         <div className="flex items-center gap-4 px-8 py-3 text-body-bold">
           {chat?.isGroup ? (
             <>
@@ -158,7 +158,7 @@ const ChatDetails = ({ chatId }) => {
           ) : (
             <>
               <img
-                src={otherMembers[0].profilePhoto || "/assets/person.jpg"}
+                src={otherMembers[0]?.profileImage || "/assets/person.jpg"}
                 alt="profile photo"
                 className="w-11 h-11 rounded-full object-cover object-center"
               />
@@ -179,8 +179,8 @@ const ChatDetails = ({ chatId }) => {
           ))}
           <div ref={bottomRef} />
         </div>
-
-        <div className="w-full flex items-center justify-between px-7 py-3 rounded-3xl cursor-pointer bg-white">
+<div className=" fixed md:relative bottom-14 md:bottom-auto">
+        <div className="w-full flex items-center justify-between px-6 md:px-7 py-3 rounded-3xl cursor-pointer bg-white">
           <div className="flex items-center gap-4">
             <CldUploadButton
               options={{ maxFiles: 1 }}
@@ -210,7 +210,7 @@ const ChatDetails = ({ chatId }) => {
           <div onClick={sendText}>
             <img src="/assets/send.jpg" alt="send" className="w-10 h-10 rounded-full hover:scale-125 ease-in-out duration-300" />
           </div>
-        </div>
+        </div></div>
       </div>
     </div>
   );

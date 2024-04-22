@@ -1,6 +1,5 @@
 "use client";
 
-
 import { useEffect, useState } from "react";
 import Loader from "./Loader";
 import { CheckCircle, RadioButtonUnchecked } from "@mui/icons-material";
@@ -11,7 +10,6 @@ const Contacts = () => {
   const [loading, setLoading] = useState(true);
   const [contacts, setContacts] = useState([]);
   const [search, setSearch] = useState("");
-
 
   const { user, isLoaded } = useUser();
   const [userData, setUserData] = useState({});
@@ -140,7 +138,10 @@ const Contacts = () => {
                 <p className="text-body-bold">Members</p>
                 <div className="flex flex-wrap gap-3">
                   {selectedContacts.map((contact, index) => (
-                    <p className="text-base-bold p-2 bg-pink-1 rounded-lg" key={index}>
+                    <p
+                      className="text-base-bold p-2 bg-pink-1 rounded-lg"
+                      key={index}
+                    >
                       {contact.username}
                     </p>
                   ))}
@@ -148,13 +149,15 @@ const Contacts = () => {
               </div>
             </>
           )}
-          <button
-            className="flex items-center justify-center rounded-xl p-3 bg-gradient-to-l from-blue-1 to-blue-3 text-body-bold text-white"
-            onClick={createChat}
-            disabled={selectedContacts.length === 0}
-          >
-            FIND OR START A NEW CHAT
-          </button>
+          <div className="fixed md:relative bottom-14 md:bottom-auto w-full flex items-center justify-center">
+            <button
+              className="relative flex items-center justify-center rounded-xl p-3 bg-gradient-to-l from-blue-1 to-blue-3 text-body-bold text-white"
+              onClick={createChat}
+              disabled={selectedContacts.length === 0}
+            >
+              FIND OR START A NEW CHAT
+            </button>
+          </div>
         </div>
       </div>
     </div>

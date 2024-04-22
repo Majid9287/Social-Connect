@@ -151,15 +151,15 @@ const Home = () => {
           <div className="flex  gap-2">
             {feedStory.map((story, index) => (
               <StoryCard
-                key={story._id}
-                link={story._id}
-                userImage={story.author.profilePhoto}
-                userName={story.author.username}
-                date={story.createdAt}
-                title={story.title}
-                totalContributions={story.contributions.length}
-                totalLikes={story.liked}
-                totalViews={story.totalViews}
+                key={story?._id}
+                link={story?._id}
+                userImage={story.author?.profilePhoto}
+                userName={story?.author.username}
+                date={story?.createdAt}
+                title={story?.title}
+                totalContributions={story?.contributions.length}
+                totalLikes={story?.liked}
+                totalViews={story?.totalViews}
               />
             ))}{" "}
           </div>

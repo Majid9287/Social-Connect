@@ -4,6 +4,7 @@ import {
   GroupOutlined,
   BookmarksOutlined,
   FavoriteBorder,
+  QuestionAnswer,
 } from "@mui/icons-material";
 
 export const sidebarLinks = [
@@ -28,9 +29,9 @@ export const sidebarLinks = [
     label: "Saved Posts",
   },
   {
-    icon: <FavoriteBorder sx={{ color: "white", fontSize: "26px" }} />,
-    route: "/liked-posts",
-    label: "Liked Posts",
+    icon: <QuestionAnswer sx={{ color: "white", fontSize: "26px" }} />,
+    route: "/chats",
+    label: "chats",
   },
 ];
 
