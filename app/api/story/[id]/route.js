@@ -6,7 +6,8 @@ export const GET = async (req, { params }) => {
   try {
     await connectToDB();
 
-    const story = await Story.findByIdAndUpdate(params.id, { $inc: { totalViews: 1 } }, { new: true })
+    // Fetch the story by its ID
+    const story = await Story.findById(params.id)
       .populate('author')
       .populate({
         path: 'contributions',
@@ -16,6 +17,16 @@ export const GET = async (req, { params }) => {
         },
       })
       .exec();
+
+    if (!story) {
+      return new Response("Story not found", { status: 404 });
+    }
+
+    // Increment the totalViews field
+    story.totalViews += 1;
+
+    // Save the updated story
+    await story.save();
 
     return new Response(JSON.stringify(story), { status: 200 });
   } catch (err) {
