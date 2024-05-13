@@ -29,7 +29,7 @@ const CreatePost = () => {
     creatorId: userData?._id,
     caption: "",
     tag: "",
-    postPhoto: null,
+    postMedia: { url: null, type: "" }, 
   };
 
   return loading || !isLoaded ? (

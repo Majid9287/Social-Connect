@@ -23,7 +23,6 @@ const Home = () => {
 
   const getFeedStory = async () => {
     setLoading(true);
-    setFeedStory([]);
     const response = await fetch("/api/story?filter=all");
     const data = await response.json();
     setFeedStory(data.slice(0, 10)); // Limit to first 10 items

@@ -18,48 +18,46 @@ export const GET = async (req, { params }) => {
 };
 
 export const POST = async (req, { params }) => {
-  const path = require("path");
-  const currentWorkingDirectory = process.cwd();
-
   try {
+    // Connect to the database
     await connectToDB();
 
+    // Get form data from the request
     const data = await req.formData();
 
-    let postPhoto = data.get("postPhoto");
-
-    if (typeof postPhoto !== "string") {
-      const bytes = await postPhoto.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-
-      const postPhotoPath = path.join(
-        currentWorkingDirectory,
-        "public",
-        "uploads",
-        postPhoto.name
-      );
-
-      await writeFile(postPhotoPath, buffer);
-
-      postPhoto = `/uploads/${postPhoto.name}`;
+    // Get media URL and type from the form data
+    const mediaUrl = data.get("media");
+    const mediaType = data.get("type");
+    if (!mediaUrl) {
+      // If media URL is not provided, return an error response
+      return new Response("Media URL is required", { status: 400 });
     }
+    // Create media object with URL and type
+    const media = {
+      url: mediaUrl,
+      type: mediaType,
+    };
 
+    // Update the post with media
     const post = await Post.findByIdAndUpdate(
       params.id,
       {
+        $push: { media: media }, // Add media to the media array
         $set: {
           caption: data.get("caption"),
           tag: data.get("tag"),
-          postPhoto: postPhoto,
         },
       },
-      { new: true, useFindAndModify: false }
+      { new: true, useFindAndModify: false } // Return the updated post
     );
 
+    // Save the updated post
     await post.save();
 
+    // Return the updated post as a response
     return new Response(JSON.stringify(post), { status: 200 });
   } catch (err) {
+    // Handle errors
     console.error(err);
     return new Response("Failed to update the post", { status: 500 });
   }

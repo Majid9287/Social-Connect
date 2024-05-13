@@ -58,7 +58,7 @@ const Home = () => {
         </button>
         {/* Dropdown menu */}
         {showDropdown && (
-          <div className=" absolute z-50 right-1 md:right-auto py-1 w-48 bg-white rounded-md shadow-lg border">
+          <div className=" absolute z-50 py-1 w-48 bg-white rounded-md shadow-lg border">
             <button
               className="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-200 w-full text-left"
               onClick={() => handleFilterOptionClick("popular")}

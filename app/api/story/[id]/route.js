@@ -6,6 +6,7 @@ export const GET = async (req, { params }) => {
   try {
     await connectToDB();
 
+    // Fetch the story by its ID
     const story = await Story.findById(params.id)
       .populate('author')
       .populate({
@@ -18,15 +19,18 @@ export const GET = async (req, { params }) => {
       .exec();
 
     if (!story) {
-      return { status: 404, body: "Story not found" };
+      return new Response("Story not found", { status: 404 });
     }
 
+    // Increment the totalViews field
     story.totalViews += 1;
+
+    // Save the updated story
     await story.save();
 
-    return { status: 200, body: story };
+    return new Response(JSON.stringify(story), { status: 200 });
   } catch (err) {
     console.error(err);
-    return { status: 500, body: "Failed to get story" };
+    return new Response("Failed to get story", { status: 500 });
   }
 };

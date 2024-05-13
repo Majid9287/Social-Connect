@@ -32,7 +32,10 @@ const EditPost = () => {
     creatorId: postData?.creator?._id,
     caption: postData?.caption,
     tag: postData?.tag,
-    postPhoto: postData?.postPhoto,
+    postMedia: {
+      url: postData?.media?.[0]?.url, 
+      type: postData?.media?.[0]?.type 
+    },
   }
 
   console.log(postInfo)

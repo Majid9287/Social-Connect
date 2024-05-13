@@ -1,46 +1,57 @@
-"use client";
-
 import { AddPhotoAlternateOutlined } from "@mui/icons-material";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
+import { CldImage, CldUploadButton } from "next-cloudinary";
+import { useState } from "react";
 
 const Posting = ({ post, apiEndpoint }) => {
   const {
     register,
     handleSubmit,
-    watch,
     formState: { errors },
   } = useForm({
     defaultValues: post,
   });
 
+  const [media, setMedia] = useState(post?.postMedia?.url);
+  const [mediaType, setMediaType] = useState(post?.postMedia?.type);
+  const [loading, setLoading] = useState(false);
+  const [mediaError, setMediaError] = useState(""); // State to track media error
+
   const router = useRouter();
 
+  const sendPhoto = (result) => {
+    setMedia(result?.info?.secure_url);
+    setMediaType(result?.info?.resource_type);
+  };
+
   const handlePublish = async (data) => {
+    setLoading(true);
+    if (!media) {
+      setMediaError("Please add media before publishing.");
+      setLoading(false);
+      return; // Return early if media is not added
+    }
+
     try {
-      const postForm = new FormData();
-
-      postForm.append("creatorId", data.creatorId);
-      postForm.append("caption", data.caption);
-      postForm.append("tag", data.tag);
-
-      if (typeof data.postPhoto !== "string") {
-        postForm.append("postPhoto", data.postPhoto[0]);
-      } else {
-        postForm.append("postPhoto", data.postPhoto);
-      }
-
+      const formData = new FormData();
+      formData.append("creatorId", data.creatorId);
+      formData.append("caption", data.caption);
+      formData.append("tag", data.tag);
+      formData.append("media", media);
+      formData.append("type", mediaType);
       const response = await fetch(apiEndpoint, {
         method: "POST",
-        body: postForm,
+        body: formData,
       });
 
       if (response.ok) {
-        router.push(`/profile/${data.creatorId}/posts`)
+        router.push(`/profile/${data.creatorId}/posts`);
       }
     } catch (err) {
-      console.log(err);
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -50,55 +61,45 @@ const Posting = ({ post, apiEndpoint }) => {
       onSubmit={handleSubmit(handlePublish)}
     >
       <label
-        htmlFor="photo"
+        htmlFor="media"
         className="flex gap-4 items-center text-light-1 cursor-pointer"
       >
-        {watch("postPhoto") ? (
-          // Check profile photo is a string or a file
-          typeof watch("postPhoto") === "string" ? (
-            <Image
-              src={watch("postPhoto")}
+        {media ? (
+          mediaType === "image" ? (
+            <img
+              src={media}
               alt="post"
               width={250}
               height={200}
               className="object-cover rounded-lg"
             />
           ) : (
-            <Image
-              src={URL.createObjectURL(watch("postPhoto")[0])}
-              alt="post"
-              width={250}
-              height={200}
+            <video
+              controls
               className="object-cover rounded-lg"
-            />
+              width="250"
+              height="200"
+            >
+              <source src={media} type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
           )
         ) : (
-          <AddPhotoAlternateOutlined
-            sx={{ fontSize: "100px", color: "white" }}
-          />
+          <CldUploadButton
+            options={{ maxFiles: 1 }}
+            onUpload={sendPhoto}
+            onError={(error) => console.error("Upload error:", error)}
+            uploadPreset="p3mzao3a"
+          >
+            <AddPhotoAlternateOutlined sx={{ fontSize: "100px", color: "white" }} />
+          </CldUploadButton>
         )}
-        <p>Upload a photo</p>
+        <p>Upload a photo or video</p>
       </label>
-      <input
-        {...register("postPhoto", {
-          validate: (value) => {
-            if (
-              typeof value === "null" ||
-              (Array.isArray(value) && value.length === 0) ||
-              value === "underfined"
-            ) {
-              return "A photo is required!";
-            }
-            return true;
-          },
-        })}
-        id="photo"
-        type="file"
-        style={{ display: "none" }}
-      />
-      {errors.postPhoto && (
-        <p className="text-red-500">{errors.postPhoto.message}</p>
-      )}
+
+      {mediaError && <p className="text-red-500">{mediaError}</p>} {/* Display media error */}
+
+      {/* Your remaining form fields... */}
 
       <div>
         <label htmlFor="caption" className="text-light-1">
@@ -134,17 +135,26 @@ const Posting = ({ post, apiEndpoint }) => {
           type="text"
           placeholder="#tag"
           className="w-full input"
+          id="tag"
         />
 
         {errors.tag && <p className="text-red-500">{errors.tag.message}</p>}
       </div>
 
-      <button
-        type="submit"
-        className="py-2.5 rounded-lg mt-10 bg-purple-1 hover:bg-pink-1 text-light-1"
-      >
-        Publish
-      </button>
+      {loading ? (
+        // Render loading icon if loading is true
+        <div  className=" flex justify-center text-center y-2.5 rounded-lg mt-10 bg-purple-1  text-light-1"
+        >
+        <div className="py-2">loading...</div> 
+        </div>
+      ) : (
+        <button
+          type="submit"
+          className="py-2.5 rounded-lg mt-10 bg-purple-1 hover:bg-gray-700 text-light-1"
+        >
+          Publish
+        </button>
+      )}
     </form>
   );
 };

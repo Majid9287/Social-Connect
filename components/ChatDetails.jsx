@@ -80,7 +80,7 @@ const ChatDetails = ({ chatId }) => {
 
   const sendPhoto = async (result) => {
     try {
-     
+      
       const res = await fetch("/api/messages", {
         method: "POST",
         headers: {
@@ -95,8 +95,8 @@ const ChatDetails = ({ chatId }) => {
       if (res.ok) {
         setText("");
         getChatDetails();
-      
-    }
+      }
+    
     } catch (err) {
       console.log(err);
     }
@@ -163,7 +163,7 @@ const ChatDetails = ({ chatId }) => {
                 className="w-11 h-11 rounded-full object-cover object-center"
               />
               <div className="text">
-                <p>{otherMembers[0].username}</p>
+                <p>{otherMembers[0]?.username}</p>
               </div>
             </>
           )}
