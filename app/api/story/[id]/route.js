@@ -2,6 +2,7 @@ import Story from "@lib/models/Story";
 import User from "@lib/models/User";
 import { connectToDB } from "@lib/mongodb/mongoose";
 
+import Contribution from "@lib/models/Contribution";
 export const GET = async (req, { params }) => {
   try {
     await connectToDB();
@@ -11,10 +12,12 @@ export const GET = async (req, { params }) => {
       .select('-__v -updatedAt') // Exclude unnecessary fields
       .populate({
         path: 'author',
+        model: User,
         select: '_id username profilePhoto', // Select only needed author fields
       })
       .populate({
         path: 'contributions',
+        model: Contribution,
         select: '-__v -updatedAt', // Exclude unnecessary contribution fields
         populate: {
           path: 'author',
