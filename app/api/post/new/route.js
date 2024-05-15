@@ -1,7 +1,7 @@
 import Post from "@lib/models/Post"
 import User from "@lib/models/User"
 import { connectToDB } from "@lib/mongodb/mongoose"
-
+import { pusherServer } from "@lib/pusher";
 export const POST = async (req) => {
   try {
     await connectToDB();
@@ -35,7 +35,7 @@ export const POST = async (req) => {
       { $push: { posts: newPost._id } },
       { new: true, useFindAndModify: false }
     );
-
+    pusherServer.trigger("post-updates", "new-post", newPost);
     // Return success response with the new post
     return new Response(JSON.stringify(newPost), { status: 200 });
   } catch (err) {

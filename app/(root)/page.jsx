@@ -7,10 +7,9 @@ import StoryCard from "@components/cards/StoryCard";
 import PostCard from "@components/cards/PostCard";
 import Loader from "@components/Loader";
 
+import { pusherClient } from "@lib/pusher";
 import { useUser } from "@clerk/nextjs";
-import Slider from "react-slick";
-import "slick-carousel/slick/slick.css";
-import "slick-carousel/slick/slick-theme.css";
+
 import Link from "next/link";
 
 const Home = () => {
@@ -40,18 +39,24 @@ const Home = () => {
   useEffect(() => {
     getFeedStory();
     getFeedPost();
+
+    // Pusher subscription for new posts
+    const postChannel = pusherClient.subscribe("post-updates"); // Assuming this is your post update channel
+    postChannel.bind("new-post", (newPostData) => {
+      setFeedPost((prevPosts) => [newPostData, ...prevPosts]); // Prepend the new post
+    });
+
+    // ... (your existing Pusher subscription for new stories)
+
+    return () => {
+      // Clean up Pusher subscriptions on unmount
+      pusherClient.unsubscribe("post-updates");
+      pusherClient.unsubscribe("story-updates");
+    };
   }, []);
 
-  const slickSettings = {
-    useCSS: true,
-    prevArrow: null,
-    infinite: false,
-    nextArrow: null,
-    arrows: false,
-    variableWidth: true,
-    slidesToShow: 1.5,
-    slidesToScroll: 1,
-  };
+
+ 
 
   const handleFilterClick = () => {
     setShowDropdown(!showDropdown);
@@ -74,7 +79,20 @@ const Home = () => {
   const handelClick = () => {
     router.push(`/create-story`);
   };
+  useEffect(() => {
+    const newStoryChannel = pusherClient.subscribe("story-updates"); 
+    
+    newStoryChannel.bind("new-story", (newStoryData) => {
+      setFeedStory(prevStories => [newStoryData, ...prevStories.slice(0, 9)]); // Add new story to the beginning and limit to 10
+    });
 
+    return () => {
+      // Clean up Pusher subscription on unmount
+      pusherClient.unsubscribe("story-updates");
+    };
+  }, []); 
+
+  
   return isLoaded ? (
     <div className="flex flex-col  ">
       <section className=" ">

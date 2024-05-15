@@ -11,6 +11,7 @@ export const GET = async (req) => {
     .populate('author')
     .populate({
       path: 'contributions',
+      model: Contribution,
       populate: {
         path: 'author',
         model: User,

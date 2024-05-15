@@ -1,14 +1,14 @@
 import Story from "@lib/models/Story";
 import User from "@lib/models/User";
 import { connectToDB } from "@lib/mongodb/mongoose";
-
+import { pusherServer } from "@lib/pusher";
 export const POST = async (req) => {
   
   try {
     await connectToDB();
 
     const data = await req.formData();
-console.log(data)
+    console.log(data)
     // Extract story data from form data
     const title = data.get("title");
     const content = data.get("content");
@@ -32,8 +32,9 @@ console.log(data)
       { $push: { stories: newStory._id } },
       { new: true, useFindAndModify: false }
     );
-
+    pusherServer.trigger("story-updates", "new-story", newStory);
     return new Response(JSON.stringify(newStory), { status: 200 });
+   
   } catch (err) {
     console.error(err);
     return new Response("Failed to create a new story", { status: 500 });

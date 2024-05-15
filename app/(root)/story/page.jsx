@@ -7,6 +7,8 @@ import { useEffect, useState } from "react";
 import React from "react";
 import { FilterAlt,MapsUgc } from "@mui/icons-material";
 import { useRouter } from 'next/navigation'
+
+import { pusherClient } from "@lib/pusher";
 const Home = () => {
 
   const { user, isLoaded } = useUser();
@@ -38,6 +40,21 @@ const Home = () => {
     console.log("Selected filter option:", option);
   };
   
+  useEffect(() => {
+    getFeedStory(); // Fetch stories initially
+
+    // Subscribe to the Pusher channel for story updates
+    const channel = pusherClient.subscribe("story-updates");
+    channel.bind("new-story", (newStory) => {
+      // Update feedStory with the new story
+      setFeedstory(prevStories => [newStory, ...prevStories]);
+    });
+
+    // Unsubscribe on component unmount to prevent memory leaks
+    return () => {
+      pusherClient.unsubscribe("story-updates");
+    };
+  }, []); 
   return loading || !isLoaded ? (
     <Loader />
   ) : (
