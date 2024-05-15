@@ -42,8 +42,30 @@ export const POST = async (req) => {
       await Post.findByIdAndUpdate(postId, { $push: { comments: newComment._id } });
     }
 
-    // Trigger a Pusher event to notify clients about the new comment
-    pusherServer.trigger(`post-${postId}-comments`, "new-comment", newComment);
+    const comments = await Comment.find({ postId, parentId: null })
+      .populate({
+        path: "user",
+        model: User,
+      })
+      .populate({
+        path: "replies",
+        model: Comment,
+        populate: [
+          { path: "user", model: User },
+          { // Recursively populate further replies
+            path: "replies",
+            model: Comment,
+            populate: [
+              { path: "user", model: User },
+              { path: "replies", model: Comment, populate: [{ path: "user", model: User }] }, // Limit depth if needed
+            ],
+          },
+        ],
+      })
+      .exec();
+
+    // Trigger a Pusher event to notify clients with all comments
+    pusherServer.trigger(`post-${postId}-comments`, "all-comments", comments);
 
     return new Response(JSON.stringify(newComment), { status: 200 });
   } catch (err) {

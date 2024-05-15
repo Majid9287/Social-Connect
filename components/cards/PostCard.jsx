@@ -10,12 +10,16 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import CommentsSection from "./comment";
 
+import { CommentList } from "./CommentList";
+import { pusherClient } from "@lib/pusher";
+import CommentForm from "../form/CommentForm";
 const PostCard = ({ post, creator, loggedInUser, update }) => {
   const [userData, setUserData] = useState({});
-  const [showComments, setShowComments] = useState(false); // State to control comment visibility
-
+  
+  const [loading, setLoading] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+  const [comments, setComments] = useState([]);
   const getUser = async () => {
     const response = await fetch(`/api/user/${loggedInUser.id}`);
     const data = await response.json();
@@ -69,7 +73,106 @@ const PostCard = ({ post, creator, loggedInUser, update }) => {
   const toggleComments = () => {
     setShowComments(!showComments); // Toggle comment visibility
   };
+  const handleAddComment = async (content, parentId) => {
+    try {
+      const res = await fetch(`/api/comments`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          postId:post?._id,
+          content:content,
+          userId: userData?._id,
+        }),
+      });
+      if (res.ok) {
+        console.log("Comment submitted successfully");
+       
+      } else {
+        console.error("Failed to submit comment");
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  useEffect(() => {
+    const commentChannel = pusherClient.subscribe(`post-${post?._id}-comments`);
+    const likeChannel = pusherClient.subscribe(`comment-${post?._id}-liked`);
+    const deleteChannel = pusherClient.subscribe(`comment-${post?._id}-deleted`);
+  
+    commentChannel.bind("all-comments", (allComments) => {
+      setComments(allComments);
+    });
+  
+    likeChannel.bind("like", ({ commentId, liked }) => {
+      setComments((prevComments) => {
+        const updatedComments = updateNestedComments(prevComments, commentId, liked); // Pass liked state
+        return updatedComments;
+      });
+    });
+  
+  
+    deleteChannel.bind("delete", ({ commentId }) => {
+      setComments((prevComments) => {
+        const updatedComments = deleteNestedComment(prevComments, commentId);
+        return updatedComments;
+      });
+    });
+  
+    return () => {
+      pusherClient.unsubscribe(`post-${post?._id}-comments`);
+      pusherClient.unsubscribe(`comment-${post?._id}-liked`);
+      pusherClient.unsubscribe(`comment-${post?._id}-deleted`);
+    };
+  }, [post]);
+  
+  const updateNestedComments = (comments, commentId, updatedLikedArray) => {
+    return comments.map(comment => {
+      if (comment._id === commentId) {
+        // Update the 'liked' array directly
+        return { ...comment, liked: updatedLikedArray, likes: updatedLikedArray.length}; // Update likes count 
+      } else if (comment.replies && comment.replies.length > 0) {
+        return { ...comment, replies: updateNestedComments(comment.replies, commentId, updatedLikedArray) };
+      }
+      return comment;
+    });
+  };
 
+  
+  const deleteNestedComment = (comments, commentId) => {
+    return comments.filter(comment => {
+      if (comment._id === commentId) {
+        return false;
+      } else if (comment.replies && comment.replies.length > 0) {
+        comment.replies = deleteNestedComment(comment.replies, commentId);
+      }
+      return true;
+    });
+  };
+  
+  
+
+  useEffect(() => {
+    // Fetch comments when the component mounts
+    getCommentDetails(post?._id);
+  }, [post]);
+
+  const getCommentDetails = async (postId) => {
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/comments/${postId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      const data = await res.json();
+      setComments(data);
+    } catch (error) {
+      console.log(error);
+    }finally{ setLoading(false)}
+  };
   return (
     <>
       <div className="w-full  rounded-lg flex flex-col gap-4 bg-dark-1 p-5 max-sm:gap-2">
@@ -172,12 +275,17 @@ const PostCard = ({ post, creator, loggedInUser, update }) => {
         </div>
       </div>{" "}
       <div className="w-full  rounded-b-lg flex flex-col gap-4 bg-white px-5 max-sm:gap-2">
-        {showComments && (
-          <CommentsSection
-            postId={post._id}
-            userData={userData}
-            className="bg-white"
-          />
+        {showComments && (<>
+          <CommentForm
+            onCommentSubmit={handleAddComment}
+          />{loading&&<><div className="text-blue-500">Loading....</div></>}
+          {comments != null && comments.length > 0 && (
+        <div className="mt-4">
+            <CommentList comments={comments} postId={post._id} userData={userData} />
+          </div>
+        )} 
+        </>
+         
         )}
       </div>
     </>

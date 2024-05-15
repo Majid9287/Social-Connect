@@ -8,9 +8,9 @@ export const POST = async (req,{params}) => {
     await connectToDB();
     const body = await req.json();
 
-    const { commentId } =  params;
+    const { commentId,postId } =  params;
     const { userId } = body;
-console.log(commentId );
+    console.log(commentId );
     // Find the comment by ID
     const comment = await Comment.findById(commentId);
 
@@ -28,7 +28,7 @@ console.log(commentId );
     await comment.save();
 
     // Send a Pusher event to notify clients about the liked comment
-    pusherServer.trigger("comment-liked", "like", { commentId, liked: comment.liked.includes(userId ) });
+    pusherServer.trigger(`comment-${postId}-liked`, "like", { commentId, liked: comment.liked });
 
     return new Response("Comment like status updated successfully", { status: 200 });
   } catch (err) {

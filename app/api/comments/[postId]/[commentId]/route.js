@@ -39,7 +39,7 @@ export const POST = async (req) => {
     await comment.save();
 
     // Send a Pusher event to notify clients about the liked comment
-    pusherServer.trigger("comment-liked", "like", { commentId, liked: comment.liked });
+    pusherServer.trigger(`comment-${postId}-liked`, "like", { commentId, liked: comment.liked });
 
     return new Response("Comment liked successfully", { status: 200 });
   } catch (err) {
