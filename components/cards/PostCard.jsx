@@ -175,7 +175,7 @@ const PostCard = ({ post, creator, loggedInUser, update }) => {
   };
   return (
     <>
-      <div className="w-full  rounded-lg flex flex-col gap-4 bg-dark-1 p-5 max-sm:gap-2">
+      <div className="w-full mb-2 rounded-lg flex flex-col gap-4 bg-dark-1 p-5 max-sm:gap-2">
         <div className="flex justify-between">
           <Link href={`/profile/${creator._id}/posts`}>
             <div className="flex gap-3 items-center">

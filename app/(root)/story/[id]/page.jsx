@@ -23,14 +23,14 @@ const Home = () => {
   const { user, isLoaded } = useUser();
   const [userData, setUserData] = useState({});
   const [loading, setLoading] = useState(true);
-  
+
   const [Data, setData] = useState(null);
   const [contributions, setContributions] = useState([]);
   const [showInput, setShowInput] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [editdropdown, setEditdropdown] = useState(false);
-  const [contributionID,setcontributionID] = useState(null);
+  const [contributionID, setcontributionID] = useState(null);
   const [isEditing, setIsEditing] = useState(false); // State to track if the contribution is being edited
   const [editedContent, setEditedContent] = useState("");
 
@@ -57,8 +57,8 @@ const Home = () => {
   };
   useEffect(() => {
     getdata();
-  }, [id]);  
-  
+  }, [id]);
+
   const getUser = async () => {
     const response = await fetch(`/api/user/${user.id}`);
     const data = await response.json();
@@ -70,7 +70,7 @@ const Home = () => {
       getUser();
     }
   }, [user]);
-  
+
   const editDropdown = () => {
     // Receive the index of the clicked card
     setEditdropdown(!editdropdown); // Set the dropdown state for the clicked card
@@ -113,7 +113,7 @@ const Home = () => {
       console.error("Error submitting contribution:", error);
     }
   };
- const handleDelete = async (ID) => {
+  const handleDelete = async (ID) => {
     try {
       const response = await fetch(`/api/story/${ID}/contriDelete`, {
         method: "DELETE",
@@ -128,11 +128,10 @@ const Home = () => {
     }
   };
 
-  
-   const handleEdit = (contributionId, content) => {
+  const handleEdit = (contributionId, content) => {
     setIsEditing(true); // Open the edit pop-up
     setEditedContent(content); // Set the edited content
-    setcontributionID(contributionId)
+    setcontributionID(contributionId);
   };
 
   const handleSaveEdit = async () => {
@@ -140,12 +139,14 @@ const Home = () => {
     try {
       const formData = new FormData();
       formData.append("content", editedContent);
-      console.log(editedContent)
-      const response = await fetch(`/api/story/${contributionID}/contriUpdate`, {
-        method: "POST",
-        body: formData,
-        
-      });
+      console.log(editedContent);
+      const response = await fetch(
+        `/api/story/${contributionID}/contriUpdate`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
       if (response.ok) {
         setIsEditing(false); // Close the edit pop-up
         getdata(); // Refresh data after edit operation
@@ -209,9 +210,12 @@ const Home = () => {
   };
   const handledislike = async (contributionId) => {
     try {
-      const response = await fetch(`/api/story/${contributionId}/contriDislike`, {
-        method: "PUT",
-      });
+      const response = await fetch(
+        `/api/story/${contributionId}/contriDislike`,
+        {
+          method: "PUT",
+        }
+      );
       if (response.ok) {
         // Handle success
         getdata(); // Refresh data after show operation
@@ -257,7 +261,7 @@ const Home = () => {
                         </div>
                         <div>
                           <p className="md:text-xs text-gray-500 truncate">
-                          {formatDate(Data.createdAt)}
+                            {formatDate(Data.createdAt)}
                           </p>
                         </div>
                       </div>
@@ -271,13 +275,12 @@ const Home = () => {
                         <div className=" items-center">
                           <ThumbUpOffAlt className="text-red-500" />
                           <p className="text-xs text-gray-500">
-                          {Data.liked.length}
+                            {Data.liked.length}
                           </p>
                         </div>
                         <div className="items-center">
                           <Visibility className="text-blue-500" />
                           <p className="text-xs text-gray-500">
-                            
                             {Data.totalViews}
                           </p>
                         </div>
@@ -292,16 +295,21 @@ const Home = () => {
                                 <ul className="py-1">
                                   {userData._id == Data.author._id && (
                                     <li>
-                                     <Link href={`/edit-story/${Data._id}`}> <button className="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-200 w-full text-left">
-                                        <Edit className="mr-2 text-blue-500" /> Edit
-                                      </button></Link>
+                                      <Link href={`/edit-story/${Data._id}`}>
+                                        {" "}
+                                        <button className="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-200 w-full text-left">
+                                          <Edit className="mr-2 text-blue-500" />{" "}
+                                          Edit
+                                        </button>
+                                      </Link>
                                     </li>
                                   )}
 
                                   {userData._id == Data.author._id && (
                                     <li>
                                       <button className="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-200 w-full text-left">
-                                        <Delete className="mr-2 text-red-500" /> Delete
+                                        <Delete className="mr-2 text-red-500" />{" "}
+                                        Delete
                                       </button>
                                     </li>
                                   )}
@@ -342,20 +350,25 @@ const Home = () => {
                           </div>
                           <div>
                             <p className="md:text-xs text-gray-500 truncate">
-                              
                               {formatDate(story.createdAt)}
                             </p>
                           </div>
                         </div>
                         <div className="flex gap-2 pt-2 ">
                           <div className=" items-center">
-                            <ThumbUpOffAlt className="text-blue-500" onClick={() => handlelike(story._id)} />
+                            <ThumbUpOffAlt
+                              className="text-blue-500"
+                              onClick={() => handlelike(story._id)}
+                            />
                             <p className="text-xs text-black">
                               {story.liked.length}
                             </p>{" "}
                           </div>
                           <div className=" items-center">
-                            <ThumbDownOffAlt className="text-blue-500" onClick={() => handledislike(story._id)} />
+                            <ThumbDownOffAlt
+                              className="text-blue-500"
+                              onClick={() => handledislike(story._id)}
+                            />
                             <p className="text-xs text-gray-500">
                               {story.diliked.length}
                             </p>
@@ -373,16 +386,26 @@ const Home = () => {
                                 >
                                   <ul className="py-1">
                                     {userData._id == story.author._id && (
-                                       <li>
-                            <button className="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-200 w-full text-left" onClick={() => handleEdit(story._id, story.content)}>
-                              <Edit className="mr-2" /> Edit
-                            </button>
-                          </li>
+                                      <li>
+                                        <button
+                                          className="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-200 w-full text-left"
+                                          onClick={() =>
+                                            handleEdit(story._id, story.content)
+                                          }
+                                        >
+                                          <Edit className="mr-2" /> Edit
+                                        </button>
+                                      </li>
                                     )}
                                     {userData._id == Data.author._id &&
                                       story.status == "show" && (
                                         <li>
-                                          <button onClick={() => handleHide(story._id)}  className="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-200 w-full text-left">
+                                          <button
+                                            onClick={() =>
+                                              handleHide(story._id)
+                                            }
+                                            className="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-200 w-full text-left"
+                                          >
                                             <VisibilityOff className="mr-2" />{" "}
                                             Hide
                                           </button>
@@ -391,15 +414,26 @@ const Home = () => {
                                     {userData._id == Data.author._id &&
                                       story.status == "hidden" && (
                                         <li>
-                                          <button onClick={() => handleShow(story._id)} className="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-200 w-full text-left">
+                                          <button
+                                            onClick={() =>
+                                              handleShow(story._id)
+                                            }
+                                            className="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-200 w-full text-left"
+                                          >
                                             <Visibility className="mr-2" /> Show
                                           </button>
                                         </li>
                                       )}
                                     {userData._id == story.author._id && (
                                       <li>
-                                        <button onClick={() => handleDelete(story._id)} className="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-200 w-full text-left">
-                                          <Delete className="mr-2 text-red-500" /> Delete
+                                        <button
+                                          onClick={() =>
+                                            handleDelete(story._id)
+                                          }
+                                          className="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-200 w-full text-left"
+                                        >
+                                          <Delete className="mr-2 text-red-500" />{" "}
+                                          Delete
                                         </button>
                                       </li>
                                     )}
@@ -448,17 +482,29 @@ const Home = () => {
                     )}
                   </div>
                 </div>
-                 
               </section>
             </div>
           </div>
           {isEditing && (
             <div className="text-black fixed top-0 z-50 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center">
               <div className="bg-white p-4 rounded-lg">
-                <textarea value={editedContent} onChange={(e) => setEditedContent(e.target.value)}></textarea>
+                <textarea
+                  value={editedContent}
+                  onChange={(e) => setEditedContent(e.target.value)}
+                ></textarea>
                 <div className="flex justify-between mt-4">
-                  <button className="bg-blue-500 text-white px-4 py-2 rounded" onClick={handleSaveEdit}>Save</button>
-                  <button className="bg-gray-500 text-white px-4 py-2 rounded" onClick={handleCancelEdit}>Cancel</button>
+                  <button
+                    className="bg-blue-500 text-white px-4 py-2 rounded"
+                    onClick={handleSaveEdit}
+                  >
+                    Save
+                  </button>
+                  <button
+                    className="bg-gray-500 text-white px-4 py-2 rounded"
+                    onClick={handleCancelEdit}
+                  >
+                    Cancel
+                  </button>
                 </div>
               </div>
             </div>

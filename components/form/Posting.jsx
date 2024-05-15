@@ -57,104 +57,119 @@ const Posting = ({ post, apiEndpoint }) => {
 
   return (
     <form
-      className="flex flex-col gap-7 pb-24"
+      className="flex flex-col gap-7 pb-24 "
       onSubmit={handleSubmit(handlePublish)}
     >
-      <label
-        htmlFor="media"
-        className="flex gap-4 items-center text-light-1 cursor-pointer"
-      >
-        {media ? (
-          mediaType === "image" ? (
-            <img
-              src={media}
-              alt="post"
-              width={250}
-              height={200}
-              className="object-cover rounded-lg"
-            />
-          ) : (
-            <video
-              controls
-              className="object-cover rounded-lg"
-              width="250"
-              height="200"
-            >
-              <source src={media} type="video/mp4" />
-              Your browser does not support the video tag.
-            </video>
-          )
-        ) : (
-          <CldUploadButton
-            options={{ maxFiles: 1 }}
-            onUpload={sendPhoto}
-            onError={(error) => console.error("Upload error:", error)}
-            uploadPreset="p3mzao3a"
-          >
-            <AddPhotoAlternateOutlined sx={{ fontSize: "100px", color: "white" }} />
-          </CldUploadButton>
-        )}
-        <p>Upload a photo or video</p>
-      </label>
-
-      {mediaError && <p className="text-red-500">{mediaError}</p>} {/* Display media error */}
-
-      {/* Your remaining form fields... */}
-
-      <div>
-        <label htmlFor="caption" className="text-light-1">
-          Caption
-        </label>
-        <textarea
-          {...register("caption", {
-            required: "Caption is required",
-            validate: (value) => {
-              if (value.length < 3) {
-                return "Caption must be more than 2 characters";
-              }
+      <div   style={{
+            scrollbarWidth: "thin",
+            "&::-webkit-scrollbar": {
+              width: "5px",
+              height: "5px",
+              borderRadius: "50px",
             },
-          })}
-          type="text"
-          rows={3}
-          placeholder="What's on your mind?"
-          className="w-full input"
-          id="caption"
-        />
+            "&::-webkit-scrollbar-thumb": {
+              backgroundColor: "rgba(0, 0, 0, 0.3)",
+              borderRadius: "50px",
+            },
+            "&::-webkit-scrollbar-track": {
+              backgroundColor: "rgba(0, 0, 0, 0.1)",
+              borderRadius: "50px",
+            },
+          }} className="max-h-[calc(100vh-200px)] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 hover:scrollbar-thumb-gray-500">
+        {" "}
+        <label
+          htmlFor="media"
+          className="flex gap-4 items-center text-light-1 cursor-pointer"
+        >
+          {media ? (
+            mediaType === "image" ? (
+              <img
+                src={media}
+                alt="post"
+                width={250}
+                height={200}
+                className="object-cover rounded-lg"
+              />
+            ) : (
+              <video
+                controls
+                className="object-cover rounded-lg"
+                width="250"
+                height="200"
+              >
+                <source src={media} type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+            )
+          ) : (
+            <CldUploadButton
+              options={{ maxFiles: 1 }}
+              onUpload={sendPhoto}
+              onError={(error) => console.error("Upload error:", error)}
+              uploadPreset="p3mzao3a"
+            >
+              <AddPhotoAlternateOutlined
+                sx={{ fontSize: "100px", color: "white" }}
+              />
+            </CldUploadButton>
+          )}
+         
+        </label>
+        {mediaError && <p className="text-red-500">{mediaError}</p>}{" "}
+        {/* Display media error */}
+        {/* Your remaining form fields... */}
+        <div>
+          <label htmlFor="caption" className="text-light-1">
+            Caption
+          </label>
+          <textarea
+            {...register("caption", {
+              required: "Caption is required",
+              validate: (value) => {
+                if (value.length < 3) {
+                  return "Caption must be more than 2 characters";
+                }
+              },
+            })}
+            type="text"
+            rows={3}
+            placeholder="What's on your mind?"
+            className="w-full input"
+            id="caption"
+          />
 
-        {errors.caption && (
-          <p className="text-red-500">{errors.caption.message}</p>
+          {errors.caption && (
+            <p className="text-red-500">{errors.caption.message}</p>
+          )}
+        </div>
+        <div>
+          <label htmlFor="tag" className="text-light-1">
+            Tag
+          </label>
+          <input
+            {...register("tag", { required: "Tag is required" })}
+            type="text"
+            placeholder="#tag"
+            className="w-full input"
+            id="tag"
+          />
+
+          {errors.tag && <p className="text-red-500">{errors.tag.message}</p>}
+        </div>
+        {loading ? (
+          // Render loading icon if loading is true
+          <div className=" flex justify-center text-center y-2.5 rounded-lg mt-10 bg-purple-1  text-light-1">
+            <div className="py-2">loading...</div>
+          </div>
+        ) : (
+          <button
+            type="submit"
+            className="py-2.5 px-2 rounded-lg mt-10 bg-purple-1 hover:bg-gray-700 text-light-1"
+          >
+            Publish
+          </button>
         )}
       </div>
-
-      <div>
-        <label htmlFor="tag" className="text-light-1">
-          Tag
-        </label>
-        <input
-          {...register("tag", { required: "Tag is required" })}
-          type="text"
-          placeholder="#tag"
-          className="w-full input"
-          id="tag"
-        />
-
-        {errors.tag && <p className="text-red-500">{errors.tag.message}</p>}
-      </div>
-
-      {loading ? (
-        // Render loading icon if loading is true
-        <div  className=" flex justify-center text-center y-2.5 rounded-lg mt-10 bg-purple-1  text-light-1"
-        >
-        <div className="py-2">loading...</div> 
-        </div>
-      ) : (
-        <button
-          type="submit"
-          className="py-2.5 rounded-lg mt-10 bg-purple-1 hover:bg-gray-700 text-light-1"
-        >
-          Publish
-        </button>
-      )}
     </form>
   );
 };
