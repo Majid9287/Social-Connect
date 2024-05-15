@@ -35,7 +35,11 @@ export const POST = async (req) => {
       { $push: { posts: newPost._id } },
       { new: true, useFindAndModify: false }
     );
-    pusherServer.trigger("post-updates", "new-post", newPost);
+    const post = await Post.findById( newPost._id)
+      .populate("creator likes")
+      .sort({ createdAt: -1 }) // Sort by createdAt in descending order (-1)
+      .exec();
+    pusherServer.trigger("post-updates", "new-post", post);
     // Return success response with the new post
     return new Response(JSON.stringify(newPost), { status: 200 });
   } catch (err) {

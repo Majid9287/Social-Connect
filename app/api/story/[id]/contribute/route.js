@@ -2,18 +2,16 @@ import Contribution from "@lib/models/Contribution";
 import Story from "@lib/models/Story";
 import User from "@lib/models/User";
 import { connectToDB } from "@lib/mongodb/mongoose";
+import { pusherServer } from "@lib/pusher";
 
-export const POST = async (req, { body, params }) => {
+export const POST = async (req, { params }) => {
   try {
     await connectToDB();
     const data = await req.formData();
-console.log(body)
-const content = data.get("content");
-const authorId = data.get("authorId");
-    
-    const { id } = params;
-    console.log("dadadad",content, authorId,id)
-    // Check if the story exists
+    const content = data.get("content");
+    const authorId = data.get("authorId");
+    const { id } = params; // Extract id from params
+console.log(content,authorId,id)
     const story = await Story.findById(id);
     if (!story) {
       return new Response("Story not found", { status: 404 });
@@ -29,15 +27,27 @@ const authorId = data.get("authorId");
     const contribution = new Contribution({
       content,
       author: authorId,
-      Story: id,
+      story: id,
     });
 
-    // Save the contribution to the database
+    // Save the contribution
     await contribution.save();
 
-    // Update the corresponding story document with the contribution ID
+    // Update the corresponding story
     story.contributions.push(contribution._id);
     await story.save();
+
+    // Populate author field of the contribution
+    const populatedContribution = await Contribution.findById(contribution._id)
+      .populate({
+        path: "author",
+        model: User,
+        select: "_id username profilePhoto",
+      })
+      .lean();
+
+    // Trigger a Pusher event to notify clients about the new contribution
+    pusherServer.trigger(`story-${id}-contributions`, "new-contribution", populatedContribution);
 
     return new Response(JSON.stringify(contribution), { status: 200 });
   } catch (err) {

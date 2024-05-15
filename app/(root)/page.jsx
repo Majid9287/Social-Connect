@@ -40,19 +40,7 @@ const Home = () => {
     getFeedStory();
     getFeedPost();
 
-    // Pusher subscription for new posts
-    const postChannel = pusherClient.subscribe("post-updates"); // Assuming this is your post update channel
-    postChannel.bind("new-post", (newPostData) => {
-      setFeedPost((prevPosts) => [newPostData, ...prevPosts]); // Prepend the new post
-    });
-
-    // ... (your existing Pusher subscription for new stories)
-
-    return () => {
-      // Clean up Pusher subscriptions on unmount
-      pusherClient.unsubscribe("post-updates");
-      pusherClient.unsubscribe("story-updates");
-    };
+  
   }, []);
 
 
@@ -81,6 +69,10 @@ const Home = () => {
   };
   useEffect(() => {
     const newStoryChannel = pusherClient.subscribe("story-updates"); 
+    const postChannel = pusherClient.subscribe("post-updates"); // Assuming this is your post update channel
+    postChannel.bind("new-post", (newPostData) => {
+      setFeedPost((prevPosts) => [newPostData, ...prevPosts]); // Prepend the new post
+    });
     
     newStoryChannel.bind("new-story", (newStoryData) => {
       setFeedStory(prevStories => [newStoryData, ...prevStories.slice(0, 9)]); // Add new story to the beginning and limit to 10
@@ -89,6 +81,7 @@ const Home = () => {
     return () => {
       // Clean up Pusher subscription on unmount
       pusherClient.unsubscribe("story-updates");
+      pusherClient.unsubscribe("post-updates");
     };
   }, []); 
 

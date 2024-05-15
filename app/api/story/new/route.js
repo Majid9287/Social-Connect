@@ -2,6 +2,8 @@ import Story from "@lib/models/Story";
 import User from "@lib/models/User";
 import { connectToDB } from "@lib/mongodb/mongoose";
 import { pusherServer } from "@lib/pusher";
+
+import Contribution from "@lib/models/Contribution";
 export const POST = async (req) => {
   
   try {
@@ -32,7 +34,26 @@ export const POST = async (req) => {
       { $push: { stories: newStory._id } },
       { new: true, useFindAndModify: false }
     );
-    pusherServer.trigger("story-updates", "new-story", newStory);
+    const story = await Story.findById(newStory._id)
+      .select('-__v -updatedAt') // Exclude unnecessary fields
+      .populate({
+        path: 'author',
+        model: User,
+        select: '_id username profilePhoto', // Select only needed author fields
+      })
+      .populate({
+        path: 'contributions',
+        model: Contribution,
+        select: '-__v -updatedAt', // Exclude unnecessary contribution fields
+        populate: {
+          path: 'author',
+          model: User,
+          select: '_id username profilePhoto', // Select only needed author fields
+        },
+      })
+      .lean()  // Return plain JavaScript object
+      .exec();
+    pusherServer.trigger("story-updates", "new-story",  story);
     return new Response(JSON.stringify(newStory), { status: 200 });
    
   } catch (err) {

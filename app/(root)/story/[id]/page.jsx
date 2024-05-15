@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Loader from "@components/Loader";
 import { useEffect, useState } from "react";
 import React from "react";
+import { pusherClient } from "@lib/pusher";
 import {
   Diversity1,
   Visibility,
@@ -14,6 +15,7 @@ import {
   MoreVert,
   Edit,
   VisibilityOff,
+  ThumbUpAlt,
   Delete,
 } from "@mui/icons-material";
 import Link from "next/link";
@@ -23,8 +25,11 @@ const Home = () => {
   const { user, isLoaded } = useUser();
   const [userData, setUserData] = useState({});
   const [loading, setLoading] = useState(true);
-
+  const [loading1, setLoading1] = useState(true);
   const [Data, setData] = useState(null);
+  const [likedstory, setLikedstory] = useState(
+    Data?.liked?.includes(userData?._id)
+  );
   const [contributions, setContributions] = useState([]);
   const [showInput, setShowInput] = useState(false);
   const [inputValue, setInputValue] = useState("");
@@ -48,6 +53,7 @@ const Home = () => {
       }
       const data = await response.json();
       setData(data);
+      setLikedstory(data?.liked?.includes(userData?._id));
       setLoading(false);
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -57,6 +63,52 @@ const Home = () => {
   };
   useEffect(() => {
     getdata();
+  }, [id]);
+  useEffect(() => {
+    const likeChannel = pusherClient.subscribe(`story-${id}-liked`);
+    const channel = pusherClient.subscribe(`story-${id}-contributions`);
+    channel.bind("new-contribution", (newContribution) => {
+      setContributions((prevContributions) => [
+        newContribution,
+        ...prevContributions,
+      ]);
+    });
+
+    // Inside the StoryPage component's useEffect hook (where you're binding to Pusher events)
+    channel.bind("dislike", ({ contributionId, disliked, dislikeCount }) => {
+      setContributions((prevContributions) =>
+        prevContributions.map((contribution) => {
+          if (contribution._id === contributionId) {
+            return { ...contribution, disliked, dislikes: dislikeCount };
+          }
+          return contribution;
+        })
+      );
+    });
+
+    // Inside the StoryPage component's useEffect hook
+    channel.bind("like", ({ contributionId, liked, likeCount }) => {
+      setContributions((prevContributions) =>
+        prevContributions.map((contribution) => {
+          if (contribution._id === contributionId) {
+            return { ...contribution, liked, likes: likeCount }; // Update liked and likes
+          }
+          return contribution;
+        })
+      );
+    });
+    likeChannel.bind("like", ({ id, liked }) => {
+      // Remove 'id' from the event data
+      setData((prevData) => {
+        // No need to check the ID since there's only one story
+        return { ...prevData, liked }; // Directly update the 'liked' array in Data
+      });
+    });
+
+    return () => {
+      pusherClient.unsubscribe(`story-${id}-contributions`);
+      pusherClient.unsubscribe(`story-${id}-liked`);
+    };
   }, [id]);
 
   const getUser = async () => {
@@ -92,7 +144,9 @@ const Home = () => {
     setInputValue(e.target.value);
   };
 
-  const handleSubmitContribution = async () => {
+  const handleSubmitContribution = async (e) => {
+    e.preventDefault();
+    setLoading1(true)
     try {
       const formData = new FormData();
       formData.append("content", inputValue);
@@ -111,6 +165,8 @@ const Home = () => {
       }
     } catch (error) {
       console.error("Error submitting contribution:", error);
+    }finally{
+      setLoading1(false)
     }
   };
   const handleDelete = async (ID) => {
@@ -226,6 +282,34 @@ const Home = () => {
       console.error("Error showing contribution:", error);
     }
   };
+  const handleLikeClick = async (Id) => {
+    if (likedstory) {
+      setLikedstory(false);
+    } else {
+      setLikedstory(true);
+    }
+    try {
+      const res = await fetch(`/api/story/${id}/like`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId: userData._id }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (likedstory) {
+          setLikedstory(false);
+        } else {
+          setLikedstory(true);
+        }
+      } else {
+        console.error("Failed to like comment");
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     const year = date.getFullYear();
@@ -273,7 +357,16 @@ const Home = () => {
                           </p>{" "}
                         </div>
                         <div className=" items-center">
-                          <ThumbUpOffAlt className="text-red-500" />
+                          <button
+                            className="mr-1 focus:outline-none"
+                            onClick={() => handleLikeClick(Data._id)}
+                          >
+                            {likedstory ? (
+                              <ThumbUpAlt className="text-red-500" />
+                            ) : (
+                              <ThumbUpOffAlt className="text-red-500" />
+                            )}
+                          </button>
                           <p className="text-xs text-gray-500">
                             {Data.liked.length}
                           </p>
@@ -469,7 +562,7 @@ const Home = () => {
                           className="bg-blue-500 text-white px-4 py-2 rounded"
                           onClick={handleSubmitContribution}
                         >
-                          Submit
+                        {loading1?"loading...":"Submit"}  
                         </button>
                       </div>
                     ) : (

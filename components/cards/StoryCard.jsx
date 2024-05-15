@@ -50,7 +50,7 @@ const StoryCard = ({
           </div>
           <div className="flex gap-1 items-center">
             <FavoriteBorder className="text-red-500" />
-            <p className="text-xs text-gray-500">{totalLikes}</p>
+            <p className="text-xs text-gray-500">{totalLikes?.length}</p>
           </div>
           <div className="flex gap-1 items-center">
             <Visibility className="text-blue-500" />
