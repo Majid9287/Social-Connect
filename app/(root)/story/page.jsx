@@ -5,7 +5,7 @@ import Loader from "@components/Loader";
 import StoryCard from "@components/cards/StoryCard1";
 import { useEffect, useState } from "react";
 import React from "react";
-import { FilterAlt,MapsUgc } from "@mui/icons-material";
+import { FilterAlt,MapsUgc, SwapVert} from "@mui/icons-material";
 import { useRouter } from 'next/navigation'
 
 import { pusherClient } from "@lib/pusher";
@@ -16,37 +16,59 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [showDropdown, setShowDropdown] = useState(false);
   const [feedstory, setFeedstory] = useState([]);
-  const getFeedStory = async () => {
-    const response = await fetch("/api/story");
+  
+  const [userData, setUserData] = useState(null);
+  const getUser = async () => {
+    if(user){
+    const response = await fetch(`/api/user/${user.id}`);
     const data = await response.json();
+    setUserData(data);}
     
-    setFeedstory(data);
+  };
+  const getFeedStory = async () => {
+    setLoading(true);
+    const response = await fetch(`/api/story?filter=popular&userId=${userData?._id}`);
+
+    const data = await response.json();
+    setFeedstory(data); // Limit to first 10 items
     setLoading(false);
   };
- 
 
   useEffect(() => {
-    getFeedStory();
-  }, []);
+    getUser();
+  }, [user]);
 
+  useEffect(() => {
+    if (userData) { // Check if userData is available
+      getFeedStory(); // Fetch stories only when userData is available
+    }
+  }, [userData]);
   
 
   const handleFilterClick = () => {
     setShowDropdown(!showDropdown);
   };
 
-  const handleFilterOptionClick = (option) => {
-    // Handle filter option click here
-    console.log("Selected filter option:", option);
+  const handleFilterOptionClick = async (option) => {
+    setLoading(true);
+    setShowDropdown(false);
+    // Send the selected filter option to the API
+    try {
+      const response = await fetch(`/api/story?filter=${option}&userId=${userData?._id}`);
+      const data = await response.json();
+      setFeedstory(data); // Limit to first 10 items
+    } catch (error) {
+      console.error("Error fetching stories:", error);
+    } finally {
+      setLoading(false);
+    }
   };
   
   useEffect(() => {
-    getFeedStory(); // Fetch stories initially
-
-    // Subscribe to the Pusher channel for story updates
+   
     const channel = pusherClient.subscribe("story-updates");
     channel.bind("new-story", (newStory) => {
-      // Update feedStory with the new story
+      getFeedStory(); 
       setFeedstory(prevStories => [newStory, ...prevStories]);
     });
 
@@ -62,7 +84,7 @@ const Home = () => {
       <section className=" ">
         <div className="flex justify-between">
         <h1 className="mb-2 text-heading2-bold max-sm:text-heading3-bold text-light-1 relative">
-        Stories
+        <SwapVert className="test-white"/>
        
         
       </h1>

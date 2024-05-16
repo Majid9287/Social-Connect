@@ -5,6 +5,7 @@ import {
   BookmarksOutlined,
   FavoriteBorder,
   QuestionAnswer,
+  AutoStories,
 } from "@mui/icons-material";
 
 export const sidebarLinks = [
@@ -32,6 +33,11 @@ export const sidebarLinks = [
     icon: <QuestionAnswer sx={{ color: "white", fontSize: "26px" }} />,
     route: "/chats",
     label: "chats",
+  },
+  {
+    icon: <AutoStories sx={{ color: "white", fontSize: "26px" }} />,
+    route: "/story",
+    label: "stories",
   },
 ];
 
@@ -67,6 +73,14 @@ export const pageTitles = [
   {
     url: "/liked-posts",
     title: "Liked Posts",
+  },
+  {
+    url: "/liked-posts",
+    title: "Liked Posts",
+  },
+   {
+    url: "/story",
+    title: "stories",
   }
 ];
 

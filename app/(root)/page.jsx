@@ -15,16 +15,27 @@ import Link from "next/link";
 const Home = () => {
   const { user, isLoaded } = useUser();
   const router = useRouter();
+  const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showDropdown, setShowDropdown] = useState(false);
   const [feedPost, setFeedPost] = useState([]);
   const [feedStory, setFeedStory] = useState([]);
 
+
+  const getUser = async () => {
+    if(user){
+    const response = await fetch(`/api/user/${user.id}`);
+    const data = await response.json();
+    setUserData(data);
+  }
+   
+  };
   const getFeedStory = async () => {
     setLoading(true);
-    const response = await fetch("/api/story?filter=all");
+    const response = await fetch(`/api/story?filter=popular&userId=${userData?._id}`);
+
     const data = await response.json();
-    setFeedStory(data.slice(0, 10)); // Limit to first 10 items
+    setFeedStory(data?.slice(0, 10)); // Limit to first 10 items
     setLoading(false);
   };
 
@@ -35,28 +46,33 @@ const Home = () => {
     setFeedPost(data);
     setLoading(false);
   };
+  useEffect(() => {
+    getUser();
+    getFeedStory();
+  }, [user]);
 
   useEffect(() => {
-    getFeedStory();
+    getUser();
     getFeedPost();
-
-  
   }, []);
-
-
+  useEffect(() => {
+    if (userData) { // Check if userData is available
+      getFeedStory(); // Fetch stories only when userData is available
+    }
+  }, [userData]);
  
-
   const handleFilterClick = () => {
     setShowDropdown(!showDropdown);
   };
 
   const handleFilterOptionClick = async (option) => {
     setLoading(true);
+    setShowDropdown(false);
     // Send the selected filter option to the API
     try {
-      const response = await fetch(`/api/story?filter=${option}`);
+      const response = await fetch(`/api/story?filter=${option}&userId=${userData?._id}`);
       const data = await response.json();
-      setFeedStory(data.slice(0, 10)); // Limit to first 10 items
+      setFeedStory(data?.slice(0, 10)); // Limit to first 10 items
     } catch (error) {
       console.error("Error fetching stories:", error);
     } finally {
@@ -71,10 +87,12 @@ const Home = () => {
     const newStoryChannel = pusherClient.subscribe("story-updates"); 
     const postChannel = pusherClient.subscribe("post-updates"); // Assuming this is your post update channel
     postChannel.bind("new-post", (newPostData) => {
+      getFeedPost();
       setFeedPost((prevPosts) => [newPostData, ...prevPosts]); // Prepend the new post
     });
     
     newStoryChannel.bind("new-story", (newStoryData) => {
+      getFeedStory();
       setFeedStory(prevStories => [newStoryData, ...prevStories.slice(0, 9)]); // Add new story to the beginning and limit to 10
     });
 
