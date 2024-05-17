@@ -2,10 +2,14 @@
 
 import { useUser } from "@clerk/nextjs";
 import { useParams } from "next/navigation";
+
+import { useRouter } from "next/navigation";
 import Loader from "@components/Loader";
 import { useEffect, useState } from "react";
 import React from "react";
 import { pusherClient } from "@lib/pusher";
+
+import ConfirmationModal from "@components/DeleteConfirmation";
 import {
   Diversity1,
   Visibility,
@@ -25,11 +29,12 @@ const Home = () => {
   const { user, isLoaded } = useUser();
   const [userData, setUserData] = useState({});
   const [loading, setLoading] = useState(true);
-  const [loading1, setLoading1] = useState(true);
+  const [loading1, setLoading1] = useState(false);
   const [Data, setData] = useState(null);
   const [likedstory, setLikedstory] = useState(
     Data?.liked?.includes(userData?._id)
   );
+  const router = useRouter();
   const [contributions, setContributions] = useState([]);
   const [showInput, setShowInput] = useState(false);
   const [inputValue, setInputValue] = useState("");
@@ -38,9 +43,13 @@ const Home = () => {
   const [contributionID, setcontributionID] = useState(null);
   const [isEditing, setIsEditing] = useState(false); // State to track if the contribution is being edited
   const [editedContent, setEditedContent] = useState("");
+  const [showContributionConfirmation, setShowContributionConfirmation] =
+    useState(false);
+  const [contributionToDelete, setContributionToDelete] = useState(null);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [delLoading, setDelLoading] = useState(false);
 
   const getdata = async () => {
-    setLoading(true);
     try {
       const response = await fetch(`/api/story/${id}`, {
         method: "GET",
@@ -67,6 +76,19 @@ const Home = () => {
   useEffect(() => {
     const likeChannel = pusherClient.subscribe(`story-${id}-liked`);
     const channel = pusherClient.subscribe(`story-${id}-contributions`);
+    const contributionDeleteChannel = pusherClient.subscribe(
+      `story-${id}-contribution-deleted`
+    );
+
+    contributionDeleteChannel.bind("contribution-deleted", (contributionId) => {
+      setData((prevData) => ({
+        ...prevData,
+        contributions: prevData.contributions.filter(
+          (c) => c._id !== contributionId
+        ),
+      }));
+      getdata();
+    });
     channel.bind("new-contribution", (newContribution) => {
       setContributions((prevContributions) => [
         newContribution,
@@ -74,7 +96,7 @@ const Home = () => {
       ]);
     });
 
-    // Inside the StoryPage component's useEffect hook (where you're binding to Pusher events)
+    // dislike for contribution
     channel.bind("dislike", ({ contributionId, disliked, dislikeCount }) => {
       setContributions((prevContributions) =>
         prevContributions.map((contribution) => {
@@ -86,7 +108,7 @@ const Home = () => {
       );
     });
 
-    // Inside the StoryPage component's useEffect hook
+    // like for contribution
     channel.bind("like", ({ contributionId, liked, likeCount }) => {
       setContributions((prevContributions) =>
         prevContributions.map((contribution) => {
@@ -97,6 +119,8 @@ const Home = () => {
         })
       );
     });
+
+    //like for story
     likeChannel.bind("like", ({ id, liked }) => {
       // Remove 'id' from the event data
       setData((prevData) => {
@@ -108,6 +132,7 @@ const Home = () => {
     return () => {
       pusherClient.unsubscribe(`story-${id}-contributions`);
       pusherClient.unsubscribe(`story-${id}-liked`);
+      pusherClient.unsubscribe(`story-${id}-contribution-deleted`);
     };
   }, [id]);
 
@@ -146,7 +171,7 @@ const Home = () => {
 
   const handleSubmitContribution = async (e) => {
     e.preventDefault();
-    setLoading1(true)
+    setLoading1(true);
     try {
       const formData = new FormData();
       formData.append("content", inputValue);
@@ -165,22 +190,44 @@ const Home = () => {
       }
     } catch (error) {
       console.error("Error submitting contribution:", error);
-    }finally{
-      setLoading1(false)
+    } finally {
+      setLoading1(false);
     }
   };
-  const handleDelete = async (ID) => {
+
+  const handleToggleContributionConfirmation = (contributionId) => {
+    setShowContributionConfirmation(true);
+    setContributionToDelete(contributionId);
+  };
+
+  const handleCancelContributionDelete = () => {
+    setShowContributionConfirmation(false);
+    setContributionToDelete(null);
+  };
+
+  const handleConfirmContributionDelete = async () => {
+    setDelLoading(true)
     try {
-      const response = await fetch(`/api/story/${ID}/contriDelete`, {
-        method: "DELETE",
-      });
+      const response = await fetch(
+        `/api/story/${id}/${contributionToDelete}/contriDelete`,
+        {
+          method: "DELETE",
+        }
+      );
       if (response.ok) {
-        // Redirect or handle success as needed
+        setShowContributionConfirmation(false);
+        setContributionToDelete(null);
+        setDelLoading(false)
+        getdata();
       } else {
-        console.error("Failed to delete story");
+        console.error("Failed to delete con");
       }
     } catch (error) {
-      console.error("Error deleting story:", error);
+      console.error("Error deleting con:", error);
+    } finally {
+      setShowContributionConfirmation(false);
+      setContributionToDelete(null);
+      setDelLoading(false)
     }
   };
 
@@ -310,6 +357,37 @@ const Home = () => {
       console.error(error);
     }
   };
+
+  const handleConfirmDelete = async () => {
+    setDelLoading(true)
+    try {
+      const response = await fetch(`/api/story/${id}/delete`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        
+      setShowConfirmation(false);
+        setDelLoading(false)
+        router.back();
+      } else {
+        console.error("Failed to delete story");
+      }
+    } catch (error) {
+      console.error("Error deleting story:", error);
+    } finally {
+      setDelLoading(false)
+      setShowConfirmation(false);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setShowConfirmation(false);
+  };
+
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     const year = date.getFullYear();
@@ -328,7 +406,7 @@ const Home = () => {
               <section>
                 <div className="pt-12">
                   <div className="mx-auto flex">
-                    <div className=" sm:w-2/6 md:w-1/4 pb-4 px-2">
+                    <div className=" w-2/6 md:w-1/4 pb-4 px-2">
                       <div className="text-black ">
                         <div className="flex truncate">
                           {" "}
@@ -337,7 +415,7 @@ const Home = () => {
                             src={Data.author.profilePhoto}
                             alt=""
                           />
-                          <div>
+                          <div className="overflow-hidden">
                             <p className="pl-2 pt-1 md:text-sm font-semibold truncate">
                               {Data.author.username}
                             </p>
@@ -349,7 +427,7 @@ const Home = () => {
                           </p>
                         </div>
                       </div>
-                      <div className="flex gap-2 pt-2 ">
+                      <div className="flex gap-1 md:gap-2 pt-2 ">
                         <div className=" items-center">
                           <Diversity1 className="text-green-500" />
                           <p className="text-xs text-gray-500">
@@ -377,43 +455,50 @@ const Home = () => {
                             {Data.totalViews}
                           </p>
                         </div>
-                        <div className=" items-center">
-                          <MoreVert
-                            className="text-black cursor-pointer"
-                            onClick={editDropdown} // Pass the index to toggleDropdown function
-                          />
-                          <>
-                            {editdropdown && (
-                              <div className="absolute z-50  bg-white rounded-md shadow-lg">
-                                <ul className="py-1">
-                                  {userData._id == Data.author._id && (
-                                    <li>
-                                      <Link href={`/edit-story/${Data._id}`}>
-                                        {" "}
-                                        <button className="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-200 w-full text-left">
-                                          <Edit className="mr-2 text-blue-500" />{" "}
-                                          Edit
-                                        </button>
-                                      </Link>
-                                    </li>
-                                  )}
+                        {userData._id == Data.author._id && (
+                          <div className=" items-center">
+                            <MoreVert
+                              className="text-black cursor-pointer"
+                              onClick={editDropdown} // Pass the index to toggleDropdown function
+                            />
+                            <>
+                              {editdropdown && (
+                                <div className="absolute z-50  bg-white rounded-md shadow-lg">
+                                  <ul className="py-1">
+                                    {userData._id == Data.author._id && (
+                                      <li>
+                                        <Link href={`/edit-story/${Data._id}`}>
+                                          {" "}
+                                          <button className="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-200 w-full text-left">
+                                            <Edit className="mr-2 text-blue-500" />{" "}
+                                            Edit
+                                          </button>
+                                        </Link>
+                                      </li>
+                                    )}
 
-                                  {userData._id == Data.author._id && (
-                                    <li>
-                                      <button className="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-200 w-full text-left">
-                                        <Delete className="mr-2 text-red-500" />{" "}
-                                        Delete
-                                      </button>
-                                    </li>
-                                  )}
-                                </ul>
-                              </div>
-                            )}
-                          </>
-                        </div>
+                                    {userData._id == Data.author._id && (
+                                      <li>
+                                        <button
+                                          onClick={() =>
+                                            setShowConfirmation(true)
+                                          }
+                                          className="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-200 w-full text-left"
+                                        >
+                                          <Delete className="mr-2 text-red-500" />{" "}
+                                          Delete
+                                        </button>
+                                      </li>
+                                    )}
+                                  </ul>
+                                </div>
+                              )}
+                            </>
+                          </div>
+                        )}
                       </div>
                     </div>
-                    <div className="sm:w-4/6 md:w-3/4 border-l-2 p-1">
+                    <div className="w-4/6 md:w-3/4 border-l-2 p-1">
                       <h2 className="text-lg text-black font-bold mb-2">
                         {Data.title}
                       </h2>
@@ -426,7 +511,7 @@ const Home = () => {
                 <section className=" border-t-2">
                   <div className="">
                     <div className="mx-auto flex">
-                      <div className=" sm:w-1/6 md:w-1/4 pb-4 px-2 pt-2">
+                      <div className=" w-2/6 md:w-1/4 pb-4 px-2 pt-2">
                         <div className="text-black ">
                           <div className="flex ">
                             {" "}
@@ -435,7 +520,7 @@ const Home = () => {
                               src={story.author.profilePhoto}
                               alt=""
                             />
-                            <div>
+                            <div className="overflow-hidden">
                               <p className="pl-2 pt-1 md:text-sm truncate font-semibold">
                                 {story.author.username}
                               </p>
@@ -466,78 +551,86 @@ const Home = () => {
                               {story.diliked.length}
                             </p>
                           </div>
-                          <div className=" items-center">
-                            <MoreVert
-                              className="text-black cursor-pointer"
-                              onMouseEnter={() => toggleDropdown(index)} // Pass the index to toggleDropdown function
-                            />
-                            <>
-                              {dropdownOpen === index && (
-                                <div
-                                  onMouseLeave={closeDropdown}
-                                  className="absolute z-50  bg-white rounded-md shadow-lg"
-                                >
-                                  <ul className="py-1">
-                                    {userData._id == story.author._id && (
-                                      <li>
-                                        <button
-                                          className="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-200 w-full text-left"
-                                          onClick={() =>
-                                            handleEdit(story._id, story.content)
-                                          }
-                                        >
-                                          <Edit className="mr-2" /> Edit
-                                        </button>
-                                      </li>
-                                    )}
-                                    {userData._id == Data.author._id &&
-                                      story.status == "show" && (
+                          {userData._id == story.author._id && (
+                            <div className=" items-center">
+                              <MoreVert
+                                className="text-black cursor-pointer"
+                                onMouseEnter={() => toggleDropdown(index)} // Pass the index to toggleDropdown function
+                              />
+                              <>
+                                {dropdownOpen === index && (
+                                  <div
+                                    onMouseLeave={closeDropdown}
+                                    className="absolute z-50  bg-white rounded-md shadow-lg"
+                                  >
+                                    <ul className="py-1">
+                                      {userData._id == story.author._id && (
                                         <li>
                                           <button
-                                            onClick={() =>
-                                              handleHide(story._id)
-                                            }
                                             className="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-200 w-full text-left"
+                                            onClick={() =>
+                                              handleEdit(
+                                                story._id,
+                                                story.content
+                                              )
+                                            }
                                           >
-                                            <VisibilityOff className="mr-2" />{" "}
-                                            Hide
+                                            <Edit className="mr-2" /> Edit
                                           </button>
                                         </li>
                                       )}
-                                    {userData._id == Data.author._id &&
-                                      story.status == "hidden" && (
+                                      {userData._id == Data.author._id &&
+                                        story.status == "show" && (
+                                          <li>
+                                            <button
+                                              onClick={() =>
+                                                handleHide(story._id)
+                                              }
+                                              className="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-200 w-full text-left"
+                                            >
+                                              <VisibilityOff className="mr-2" />{" "}
+                                              Hide
+                                            </button>
+                                          </li>
+                                        )}
+                                      {userData._id == Data.author._id &&
+                                        story.status == "hidden" && (
+                                          <li>
+                                            <button
+                                              onClick={() =>
+                                                handleShow(story._id)
+                                              }
+                                              className="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-200 w-full text-left"
+                                            >
+                                              <Visibility className="mr-2" />{" "}
+                                              Show
+                                            </button>
+                                          </li>
+                                        )}
+                                      {userData._id == story.author._id && (
                                         <li>
                                           <button
                                             onClick={() =>
-                                              handleShow(story._id)
+                                              handleToggleContributionConfirmation(
+                                                story._id
+                                              )
                                             }
                                             className="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-200 w-full text-left"
                                           >
-                                            <Visibility className="mr-2" /> Show
+                                            <Delete className="mr-2 text-red-500" />{" "}
+                                            Delete
                                           </button>
                                         </li>
                                       )}
-                                    {userData._id == story.author._id && (
-                                      <li>
-                                        <button
-                                          onClick={() =>
-                                            handleDelete(story._id)
-                                          }
-                                          className="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-200 w-full text-left"
-                                        >
-                                          <Delete className="mr-2 text-red-500" />{" "}
-                                          Delete
-                                        </button>
-                                      </li>
-                                    )}
-                                  </ul>
-                                </div>
-                              )}
-                            </>
-                          </div>
+                                    </ul>
+                                  </div>
+                                )}
+                              </>
+                            </div>
+                          )}
                         </div>
                       </div>
-                      <div className="sm:w-5/6 md:w-3/4 border-l-2 p-1 pt-2">
+                      <div className="w-4/6 md:w-3/4 border-l-2 p-1 pt-2">
                         <p>{story.content}</p>
                       </div>
                     </div>
@@ -556,13 +649,14 @@ const Home = () => {
                           className="w-full border-b-2 border-gray-500 mr-2"
                           placeholder="Add your thoughts..."
                           value={inputValue}
+                          required
                           onChange={handleInputChange}
                         />
                         <button
                           className="bg-blue-500 text-white px-4 py-2 rounded"
                           onClick={handleSubmitContribution}
                         >
-                        {loading1?"loading...":"Submit"}  
+                          {loading1 ? "loading..." : "Submit"}
                         </button>
                       </div>
                     ) : (
@@ -603,6 +697,22 @@ const Home = () => {
             </div>
           )}
         </section>
+      )}{" "}
+      {showConfirmation && (
+        <ConfirmationModal
+          onCancel={handleCancelDelete}
+          onConfirm={handleConfirmDelete}
+          loading={delLoading}
+          text="Are you sure you want to delete this Story?"
+        />
+      )}
+      {showContributionConfirmation && (
+        <ConfirmationModal
+          onCancel={handleCancelContributionDelete}
+          onConfirm={handleConfirmContributionDelete}
+          loading={delLoading}
+          text="Are you sure you want to delete this contribution?"
+        />
       )}
     </div>
   );

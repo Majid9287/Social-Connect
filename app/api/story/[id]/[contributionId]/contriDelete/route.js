@@ -1,29 +1,32 @@
 import Contribution from "@lib/models/Contribution";
 import Story from "@lib/models/Story";
 import { connectToDB } from "@lib/mongodb/mongoose";
+import { pusherServer } from "@/lib/pusher";
 
 export const DELETE = async (req, { params }) => {
   try {
     await connectToDB();
-    const { id } = params;
-
-    // Check if the contribution exists
-    const contribution = await Contribution.findById(id);
+    const { id, contributionId } = params; 
+    console.log(id, contributionId )
+    const contribution = await Contribution.findById(contributionId);
     if (!contribution) {
       return new Response("Contribution not found", { status: 404 });
     }
 
-    // Remove the contribution ID from the corresponding story
-    const story = await Story.findById(contribution.Story);
-    if (story) {
-      story.contributions = story.contributions.filter(
-        (contributionId) => contributionId.toString() !== id
-      );
-      await story.save();
+    const story = await Story.findByIdAndUpdate(
+      id,
+      { $pull: { contributions: contributionId } },
+      { new: true } 
+    );
+
+    if (!story) {
+      return new Response("Story not found", { status: 404 });
     }
 
-    // Delete the contribution
-    await contribution.delete();
+    await contribution.deleteOne(); 
+
+    // Trigger a Pusher event with the more specific channel name
+    pusherServer.trigger(`story-${id}-contribution-deleted`, 'contribution-deleted', { contributionId });
 
     return new Response("Contribution deleted successfully", { status: 200 });
   } catch (err) {
