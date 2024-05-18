@@ -140,6 +140,7 @@ const Home = () => {
       }));
     });
     channel.bind("new-contribution", (populatedContribution) => {
+      getdata();
       setData((prevData) => ({
         ...prevData,
         contributions: [populatedContribution, ...prevData.contributions],
@@ -147,6 +148,7 @@ const Home = () => {
     });
 
     channel.bind("like", (data) => {
+      getdata();
       setData((prevData) => ({
         ...prevData,
         contributions: prevData.contributions.map((contribution) => {
@@ -163,6 +165,7 @@ const Home = () => {
 
     // Dislike event handler
     channel.bind("dislike", (data) => {
+      getdata();
       setData((prevData) => ({
         ...prevData,
         contributions: prevData.contributions.map((contribution) => {
@@ -179,6 +182,7 @@ const Home = () => {
 
     //like for story
     likeChannel.bind("like", ({ id, liked }) => {
+      getdata();
       console.log("puser like");
       setData((prevData) => {
         // No need to check the ID since there's only one story
@@ -244,7 +248,7 @@ const Home = () => {
       if (response.ok) {
         setInputValue("");
         setShowInput(false);
-        //  getdata();
+          getdata();
       } else {
         console.error("Failed to submit contribution");
       }
