@@ -30,15 +30,16 @@ export const sidebarLinks = [
     label: "Saved Posts",
   },
   {
-    icon: <QuestionAnswer sx={{ color: "white", fontSize: "26px" }} />,
-    route: "/chats",
-    label: "chats",
-  },
-  {
     icon: <AutoStories sx={{ color: "white", fontSize: "26px" }} />,
     route: "/story",
     label: "stories",
   },
+  {
+    icon: <QuestionAnswer sx={{ color: "white", fontSize: "26px" }} />,
+    route: "/chats",
+    label: "chats",
+  },
+  
 ];
 
 export const pageTitles = [

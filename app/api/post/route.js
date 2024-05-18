@@ -6,7 +6,7 @@ export const GET = async (req) => {
     await connectToDB();
 
     const feedPosts = await Post.find()
-      .populate("creator likes")
+      .populate("creator")
       .sort({ createdAt: -1 }) // Sort by createdAt in descending order (-1)
       .exec();
 

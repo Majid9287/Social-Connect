@@ -29,9 +29,7 @@ const Followers = () => {
     getUser();
   }, [id]);
 
-  return loading ? (
-    <Loader />
-  ) : (
+  return (
     <div className="flex flex-col gap-9">
       <ProfileCard userData={userData} activeTab="Followers" />
 

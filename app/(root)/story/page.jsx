@@ -77,7 +77,7 @@ const Home = () => {
       pusherClient.unsubscribe("story-updates");
     };
   }, []); 
-  return loading || !isLoaded ? (
+  return loading ? (
     <Loader />
   ) : (
     <div className="flex flex-col  ">

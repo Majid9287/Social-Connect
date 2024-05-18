@@ -6,8 +6,8 @@ import { ClerkProvider } from "@clerk/nextjs";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "Halo Chat App",
-  description: "A Next.js 14 Chat App ",
+  title: "Chat",
+  description: "Social-Connect Chat",
 };
 
 export default function RootLayout({ children }) {

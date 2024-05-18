@@ -2,16 +2,15 @@
 
 import { useUser } from "@clerk/nextjs";
 import { useParams } from "next/navigation";
-
 import { useRouter } from "next/navigation";
 import Loader from "@components/Loader";
 import { useEffect, useState } from "react";
 import React from "react";
 import { pusherClient } from "@lib/pusher";
-
 import ConfirmationModal from "@components/DeleteConfirmation";
 import {
   Diversity1,
+  ThumbDownAlt,
   Visibility,
   FavoriteBorder,
   ThumbUpOffAlt,
@@ -35,7 +34,6 @@ const Home = () => {
     Data?.liked?.includes(userData?._id)
   );
   const router = useRouter();
-  const [contributions, setContributions] = useState([]);
   const [showInput, setShowInput] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -48,7 +46,7 @@ const Home = () => {
   const [contributionToDelete, setContributionToDelete] = useState(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [delLoading, setDelLoading] = useState(false);
-
+  const [loading2, setloading2] = useState(false);
   const getdata = async () => {
     try {
       const response = await fetch(`/api/story/${id}`, {
@@ -79,50 +77,109 @@ const Home = () => {
     const contributionDeleteChannel = pusherClient.subscribe(
       `story-${id}-contribution-deleted`
     );
+    const contributionUpdateChannel = pusherClient.subscribe(
+      `story-${id}-contribution-update`
+    );
+    const contributionShowChannel = pusherClient.subscribe(
+      `story-${id}-contribution-show`
+    );
+    const contributionHideChannel = pusherClient.subscribe(
+      `story-${id}-contribution-hide`
+    );
+    contributionHideChannel.bind("contribution-hide", (data) => {
+      getdata();
+      console.log("Pusher update: contribution hidden"); // For debugging
+      setData((prevData) => ({
+        ...prevData,
+        contributions: prevData.contributions.map((contribution) => {
+          if (contribution._id === data._id) {
+            return updatedContribution; // Replace with updated contribution
+          }
+          return contribution; // Keep others as is
+        }),
+      }));
+    });
+
+    contributionShowChannel.bind("contribution-show", (updatedContribution) => {
+      console.log("puser show");
+      getdata();
+      setData((prevData) => ({
+        ...prevData,
+        contributions: prevData.contributions.map((contribution) => {
+          if (contribution._id === updatedContribution._id) {
+            return updatedContribution; // Replace with updated contribution
+          }
+          return contribution; // Keep others as is
+        }),
+      }));
+    });
+    contributionUpdateChannel.bind(
+      "contribution-update",
+      (updatedContribution) => {
+        console.log("puser up");
+        getdata();
+        setData((prevData) => ({
+          ...prevData,
+          contributions: prevData.contributions.map((contribution) => {
+            if (contribution._id === updatedContribution._id) {
+              return updatedContribution; // Replace with updated contribution
+            }
+            return contribution; // Keep others as is
+          }),
+        }));
+      }
+    );
 
     contributionDeleteChannel.bind("contribution-deleted", (contributionId) => {
+      getdata();
       setData((prevData) => ({
         ...prevData,
         contributions: prevData.contributions.filter(
           (c) => c._id !== contributionId
         ),
       }));
-      getdata();
     });
-    channel.bind("new-contribution", (newContribution) => {
-      setContributions((prevContributions) => [
-        newContribution,
-        ...prevContributions,
-      ]);
-    });
-
-    // dislike for contribution
-    channel.bind("dislike", ({ contributionId, disliked, dislikeCount }) => {
-      setContributions((prevContributions) =>
-        prevContributions.map((contribution) => {
-          if (contribution._id === contributionId) {
-            return { ...contribution, disliked, dislikes: dislikeCount };
-          }
-          return contribution;
-        })
-      );
+    channel.bind("new-contribution", (populatedContribution) => {
+      setData((prevData) => ({
+        ...prevData,
+        contributions: [populatedContribution, ...prevData.contributions],
+      }));
     });
 
-    // like for contribution
-    channel.bind("like", ({ contributionId, liked, likeCount }) => {
-      setContributions((prevContributions) =>
-        prevContributions.map((contribution) => {
-          if (contribution._id === contributionId) {
-            return { ...contribution, liked, likes: likeCount }; // Update liked and likes
+    channel.bind("like", (data) => {
+      setData((prevData) => ({
+        ...prevData,
+        contributions: prevData.contributions.map((contribution) => {
+          if (contribution._id === data.contributionId) {
+            return {
+              ...contribution,
+              liked: data.liked, // Update the entire liked array
+            };
           }
           return contribution;
-        })
-      );
+        }),
+      }));
+    });
+
+    // Dislike event handler
+    channel.bind("dislike", (data) => {
+      setData((prevData) => ({
+        ...prevData,
+        contributions: prevData.contributions.map((contribution) => {
+          if (contribution._id === data.contributionId) {
+            return {
+              ...contribution,
+              disliked: data.disliked, // Update the entire disliked array
+            };
+          }
+          return contribution;
+        }),
+      }));
     });
 
     //like for story
     likeChannel.bind("like", ({ id, liked }) => {
-      // Remove 'id' from the event data
+      console.log("puser like");
       setData((prevData) => {
         // No need to check the ID since there's only one story
         return { ...prevData, liked }; // Directly update the 'liked' array in Data
@@ -133,6 +190,9 @@ const Home = () => {
       pusherClient.unsubscribe(`story-${id}-contributions`);
       pusherClient.unsubscribe(`story-${id}-liked`);
       pusherClient.unsubscribe(`story-${id}-contribution-deleted`);
+      pusherClient.unsubscribe(`story-${id}-contribution-update`);
+      pusherClient.unsubscribe(`story-${id}-contribution-show`);
+      pusherClient.unsubscribe(`story-${id}-contribution-hide`);
     };
   }, [id]);
 
@@ -184,7 +244,7 @@ const Home = () => {
       if (response.ok) {
         setInputValue("");
         setShowInput(false);
-        getdata();
+        //  getdata();
       } else {
         console.error("Failed to submit contribution");
       }
@@ -206,7 +266,7 @@ const Home = () => {
   };
 
   const handleConfirmContributionDelete = async () => {
-    setDelLoading(true)
+    setDelLoading(true);
     try {
       const response = await fetch(
         `/api/story/${id}/${contributionToDelete}/contriDelete`,
@@ -217,8 +277,8 @@ const Home = () => {
       if (response.ok) {
         setShowContributionConfirmation(false);
         setContributionToDelete(null);
-        setDelLoading(false)
-        getdata();
+        setDelLoading(false);
+        // getdata();
       } else {
         console.error("Failed to delete con");
       }
@@ -227,7 +287,7 @@ const Home = () => {
     } finally {
       setShowContributionConfirmation(false);
       setContributionToDelete(null);
-      setDelLoading(false)
+      setDelLoading(false);
     }
   };
 
@@ -238,26 +298,29 @@ const Home = () => {
   };
 
   const handleSaveEdit = async () => {
-    // Call the API endpoint to save the edited contribution
+    setloading2(true);
     try {
       const formData = new FormData();
       formData.append("content", editedContent);
       console.log(editedContent);
       const response = await fetch(
-        `/api/story/${contributionID}/contriUpdate`,
+        `/api/story/${id}/${contributionID}/contriUpdate`,
         {
           method: "POST",
           body: formData,
         }
       );
       if (response.ok) {
+        setloading2(false);
         setIsEditing(false); // Close the edit pop-up
-        getdata(); // Refresh data after edit operation
+        // getdata(); // Refresh data after edit operation
       } else {
         console.error("Failed to save edited contribution");
       }
     } catch (error) {
       console.error("Error saving edited contribution:", error);
+    } finally {
+      setloading2(false);
     }
   };
 
@@ -266,44 +329,77 @@ const Home = () => {
     setEditedContent(""); // Clear the edited content
   };
   const handleHide = async (contributionId) => {
+    setDelLoading(true);
     try {
-      const response = await fetch(`/api/story/${contributionId}/contriHide`, {
-        method: "PUT",
-      });
+      const response = await fetch(
+        `/api/story/${id}/${contributionId}/contriHide`,
+        {
+          method: "PUT",
+        }
+      );
       if (response.ok) {
-        // Handle success
-        getdata(); // Refresh data after hide operation
+        setDelLoading(false);
       } else {
         console.error("Failed to hide contribution");
       }
     } catch (error) {
       console.error("Error hiding contribution:", error);
+    } finally {
+      setDelLoading(false);
     }
   };
 
   const handleShow = async (contributionId) => {
+    setDelLoading(true);
     try {
-      const response = await fetch(`/api/story/${contributionId}/contriShow`, {
-        method: "PUT",
-      });
+      const response = await fetch(
+        `/api/story/${id}/${contributionId}/contriShow`,
+        {
+          method: "PUT",
+        }
+      );
       if (response.ok) {
-        // Handle success
-        getdata(); // Refresh data after show operation
+        setDelLoading(false);
       } else {
         console.error("Failed to show contribution");
       }
     } catch (error) {
       console.error("Error showing contribution:", error);
+    } finally {
+      setDelLoading(false);
     }
   };
   const handlelike = async (contributionId) => {
+    const userId = userData._id;
+    const contribution = Data?.contributions.find((contribution) => contribution._id === contributionId);
+    const alreadyLiked = contribution?.liked?.includes(userId);
+    const newLiked = alreadyLiked ? contribution.liked.filter((id) => id !== userId) : [...contribution.liked, userId];
+
+    // Update the UI immediately
+    setData((prevData) => ({
+      ...prevData,
+      contributions: prevData.contributions.map((contribution) =>
+        contribution._id === contributionId
+          ? {
+              ...contribution,
+              liked: newLiked,
+            }
+          : contribution
+      ),
+    }));
     try {
-      const response = await fetch(`/api/story/${contributionId}/contriLike`, {
-        method: "PUT",
-      });
+      const formData = new FormData();
+      formData.append("userId", userData._id);
+      const response = await fetch(
+        `/api/story/${id}/${contributionId}/contriLike`,
+        {
+          method: "PUT",
+          body: formData,
+        }
+      );
       if (response.ok) {
         // Handle success
-        getdata(); // Refresh data after show operation
+        // getdata(); // Refresh data after show operation
       } else {
         console.error("Failed to show contribution");
       }
@@ -312,16 +408,36 @@ const Home = () => {
     }
   };
   const handledislike = async (contributionId) => {
+    const userId = userData._id;
+    const contribution = Data?.contributions.find((contribution) => contribution._id === contributionId);
+    const alreadyDisliked = contribution?.disliked?.includes(userId);
+    const newDisliked = alreadyDisliked ? contribution.disliked.filter((id) => id !== userId) : [...contribution.disliked, userId];
+
+    // Update the UI immediately
+    setData((prevData) => ({
+      ...prevData,
+      contributions: prevData.contributions.map((contribution) =>
+        contribution._id === contributionId
+          ? {
+              ...contribution,
+              disliked: newDisliked,
+            }
+          : contribution
+      ),
+    }));
     try {
+      const formData = new FormData();
+      formData.append("userId", userData._id);
       const response = await fetch(
-        `/api/story/${contributionId}/contriDislike`,
+        `/api/story/${id}/${contributionId}/contriDislike`,
         {
           method: "PUT",
+          body: formData,
         }
       );
       if (response.ok) {
         // Handle success
-        getdata(); // Refresh data after show operation
+        // getdata(); // Refresh data after show operation
       } else {
         console.error("Failed to show contribution");
       }
@@ -330,11 +446,15 @@ const Home = () => {
     }
   };
   const handleLikeClick = async (Id) => {
-    if (likedstory) {
-      setLikedstory(false);
-    } else {
-      setLikedstory(true);
-    }
+    const userId = userData._id;
+    const alreadyLiked = Data?.liked?.includes(userId);
+    const newLiked = alreadyLiked ? Data.liked.filter((id) => id !== userId) : [...Data.liked, userId];
+
+    // Update the UI immediately
+    setData((prevData) => ({
+      ...prevData,
+      liked: newLiked,
+    }));
     try {
       const res = await fetch(`/api/story/${id}/like`, {
         method: "POST",
@@ -359,7 +479,7 @@ const Home = () => {
   };
 
   const handleConfirmDelete = async () => {
-    setDelLoading(true)
+    setDelLoading(true);
     try {
       const response = await fetch(`/api/story/${id}/delete`, {
         method: "DELETE",
@@ -369,9 +489,8 @@ const Home = () => {
       });
 
       if (response.ok) {
-        
-      setShowConfirmation(false);
-        setDelLoading(false)
+        setShowConfirmation(false);
+        setDelLoading(false);
         router.back();
       } else {
         console.error("Failed to delete story");
@@ -379,7 +498,7 @@ const Home = () => {
     } catch (error) {
       console.error("Error deleting story:", error);
     } finally {
-      setDelLoading(false)
+      setDelLoading(false);
       setShowConfirmation(false);
     }
   };
@@ -439,7 +558,7 @@ const Home = () => {
                             className="mr-1 focus:outline-none"
                             onClick={() => handleLikeClick(Data._id)}
                           >
-                            {likedstory ? (
+                             {Data.liked.includes(userData._id)  ? (
                               <ThumbUpAlt className="text-red-500" />
                             ) : (
                               <ThumbUpOffAlt className="text-red-500" />
@@ -534,21 +653,35 @@ const Home = () => {
                         </div>
                         <div className="flex gap-2 pt-2 ">
                           <div className=" items-center">
-                            <ThumbUpOffAlt
-                              className="text-blue-500"
-                              onClick={() => handlelike(story._id)}
-                            />
+                            {story.liked.includes(userData._id) ? (
+                              <ThumbUpAlt
+                                className="text-blue-500"
+                                onClick={() => handlelike(story._id)}
+                              />
+                            ) : (
+                              <ThumbUpOffAlt
+                                className="text-blue-500"
+                                onClick={() => handlelike(story._id)}
+                              />
+                            )}
                             <p className="text-xs text-black">
                               {story.liked.length}
                             </p>{" "}
                           </div>
                           <div className=" items-center">
-                            <ThumbDownOffAlt
-                              className="text-blue-500"
-                              onClick={() => handledislike(story._id)}
-                            />
+                            {story.disliked.includes(userData._id) ? (
+                              <ThumbDownAlt
+                                className="text-blue-500"
+                                onClick={() => handledislike(story._id)}
+                              />
+                            ) : (
+                              <ThumbDownOffAlt
+                                className="text-blue-500"
+                                onClick={() => handledislike(story._id)}
+                              />
+                            )}
                             <p className="text-xs text-gray-500">
-                              {story.diliked.length}
+                              {story.disliked?.length}
                             </p>
                           </div>
                           {userData._id == story.author._id && (
@@ -589,7 +722,9 @@ const Home = () => {
                                               className="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-200 w-full text-left"
                                             >
                                               <VisibilityOff className="mr-2" />{" "}
-                                              Hide
+                                              {delLoading
+                                                ? "hiding..."
+                                                : "Hide"}
                                             </button>
                                           </li>
                                         )}
@@ -603,7 +738,9 @@ const Home = () => {
                                               className="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-200 w-full text-left"
                                             >
                                               <Visibility className="mr-2" />{" "}
-                                              Show
+                                              {delLoading
+                                                ? "showing..."
+                                                : "show"}
                                             </button>
                                           </li>
                                         )}
@@ -630,9 +767,17 @@ const Home = () => {
                           )}
                         </div>
                       </div>
-                      <div className="w-4/6 md:w-3/4 border-l-2 p-1 pt-2">
-                        <p>{story.content}</p>
-                      </div>
+                      {story.status === "show" ? (
+                        <div className="w-4/6 md:w-3/4 border-l-2 p-1 pt-2">
+                          <p>{story.content}</p>
+                        </div>
+                      ) : (
+                        <div className="w-4/6 md:w-3/4 border-l-2 p-1 pt-2">
+                          <p className="text-red-500">
+                            Content is hidden by story author
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </section>
@@ -684,7 +829,7 @@ const Home = () => {
                     className="bg-blue-500 text-white px-4 py-2 rounded"
                     onClick={handleSaveEdit}
                   >
-                    Save
+                    {loading2 ? "saving.." : "Save"}
                   </button>
                   <button
                     className="bg-gray-500 text-white px-4 py-2 rounded"

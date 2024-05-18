@@ -32,9 +32,7 @@ console.log(userData)
     visibility: "",
   };
 
-  return loading || !isLoaded ? (
-    <Loader />
-  ) : (
+  return  (
     <div className="pt-6">
       <Posting story={postData} apiEndpoint={"/api/story/new"} />
     </div>

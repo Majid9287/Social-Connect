@@ -34,9 +34,7 @@ const ProfilePosts = () => {
 
   console.log(userData)
 
-  return loading || !isLoaded ? (
-    <Loader />
-  ) : (
+  return (
     <div className="flex flex-col gap-9">
       <ProfileCard userData={userData} activeTab="Posts" />
 
@@ -46,7 +44,7 @@ const ProfilePosts = () => {
         ))}
       </div>
     </div>
-  );
+  )
 };
 
 export default ProfilePosts;

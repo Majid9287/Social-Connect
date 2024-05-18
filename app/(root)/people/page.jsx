@@ -20,7 +20,7 @@ const People = () => {
     getAllUsers()
   }, [])
 
-  return loading ? <Loader /> : (
+  return  (
     <div className='flex flex-col gap-4 py-6'>
       {allUsers?.map((user) => (
         <UserCard key={user.id} userData={user} update={getAllUsers} />

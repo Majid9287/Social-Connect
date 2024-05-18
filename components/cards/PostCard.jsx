@@ -20,9 +20,13 @@ const PostCard = ({ post, creator, loggedInUser, update }) => {
   const [loading, setLoading] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState([]);
+  const [ isLiked, setisLiked] = useState( post.likes.find((item) => item == userData?._id));
+  const [isSaved,setisSaved] =useState( userData?.savedPosts?.find((item) => item._id === post._id))
   const getUser = async () => {
     const response = await fetch(`/api/user/${loggedInUser.id}`);
     const data = await response.json();
+    setisLiked( post.likes.find((item) => item == data?._id))
+    setisSaved(data?.savedPosts?.find((item) => item._id === post._id))
     setUserData(data);
   };
 
@@ -30,10 +34,10 @@ const PostCard = ({ post, creator, loggedInUser, update }) => {
     getUser();
   }, []);
 
-  const isSaved = userData?.savedPosts?.find((item) => item._id === post._id);
-  const isLiked = userData?.likedPosts?.find((item) => item._id === post._id);
 
+  
   const handleSave = async () => {
+    setisSaved(!isSaved)
     const response = await fetch(
       `/api/user/${loggedInUser.id}/save/${post._id}`,
       {
@@ -49,21 +53,30 @@ const PostCard = ({ post, creator, loggedInUser, update }) => {
   };
 
   const handleLike = async () => {
-    const response = await fetch(
-      `/api/user/${loggedInUser.id}/like/${post._id}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+    setisLiked(!isLiked)
+    try {
+      const response = await fetch(
+        `/api/post/${post._id}/${userData?._id}/likePost/`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      if (response.ok) {
+        // Handle success
+        //  update(); // Refresh data after show operation
+      } else {
+        console.error("Failed to show contribution");
       }
-    );
-    const data = await response.json();
-    setUserData(data);
-    update();
+    } catch (error) {
+      console.error("Error showing contribution:", error);
+    }
   };
 
   const handleDelete = async () => {
+  
     await fetch(`/api/post/${post._id}/${userData._id}`, {
       method: "DELETE",
     });
@@ -99,6 +112,12 @@ const PostCard = ({ post, creator, loggedInUser, update }) => {
   useEffect(() => {
     const commentChannel = pusherClient.subscribe(`post-${post?._id}-comments`);
     const likeChannel = pusherClient.subscribe(`comment-${post?._id}-liked`);
+    const PostlikeChannel = pusherClient.subscribe(`post-${post?._id}-liked`);
+    PostlikeChannel.bind("like", ({ id, liked }) => {
+      console.log("puser like");
+     update();
+    });
+
     const deleteChannel = pusherClient.subscribe(
       `comment-${post?._id}-deleted`
     );
@@ -129,6 +148,7 @@ const PostCard = ({ post, creator, loggedInUser, update }) => {
     });
 
     return () => {
+      pusherClient.unsubscribe(`post-${post?._id}-liked`);
       pusherClient.unsubscribe(`post-${post?._id}-comments`);
       pusherClient.unsubscribe(`comment-${post?._id}-liked`);
       pusherClient.unsubscribe(`comment-${post?._id}-deleted`);
@@ -254,14 +274,14 @@ const PostCard = ({ post, creator, loggedInUser, update }) => {
 
         <div className="flex justify-between">
           <div className="flex gap-2 items-center">
-            {!isLiked ? (
-              <FavoriteBorder
-                sx={{ color: "white", cursor: "pointer" }}
+            {isLiked ? (
+              <Favorite
+                sx={{ color: "red", cursor: "pointer" }}
                 onClick={() => handleLike()}
               />
             ) : (
-              <Favorite
-                sx={{ color: "red", cursor: "pointer" }}
+              <FavoriteBorder
+                sx={{ color: "white", cursor: "pointer" }}
                 onClick={() => handleLike()}
               />
             )}

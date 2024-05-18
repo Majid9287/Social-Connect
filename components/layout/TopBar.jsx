@@ -32,7 +32,7 @@ const TopBar = () => {
   const router = useRouter();
   const [search, setSearch] = useState("");
 
-  return !isLoaded || loading ? (
+  return !isLoaded? (
     <Loader />
   ) : (
     <div className="flex justify-between items-center mt-6">

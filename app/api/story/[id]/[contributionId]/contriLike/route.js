@@ -1,38 +1,49 @@
 import Contribution from "@lib/models/Contribution";
+import { pusherServer } from "@lib/pusher"; 
 import { connectToDB } from "@lib/mongodb/mongoose";
-import { pusherServer } from "@lib/pusher";  // Import Pusher
 
 export const PUT = async (req, { params }) => {
   try {
     await connectToDB();
-    const { id, contributionId } = params; 
-    const { userId } = await req.json();
 
-    // Find and update the contribution (use addToSet to avoid duplicates)
-    const updatedContribution = await Contribution.findByIdAndUpdate(
-      contributionId,
-      { $addToSet: { liked: userId } }, 
-      { new: true }
-    ).populate("liked"); // Populate liked users
+    const {id, contributionId } = params;
+    const data = await req.formData();
+    const userId = data.get("userId");
+    
+    console.log(id, contributionId,userId )
+    const contribution = await Contribution.findById(contributionId);
 
-    // Get the story ID from the updated contribution
-    const storyId = updatedContribution.Story;
+    if (!contribution) {
+      return new Response("Contribution not found", { status: 404 });
+    }
 
-    // Check if the user ID is in the liked array to determine the current like status
-    const liked = updatedContribution.liked.some((id) => id.toString() === userId);
-    const likeCount = updatedContribution.liked.length;
+    // Toggle the like status
+    const likedIndex = contribution.liked.indexOf(userId);
+    if (likedIndex === -1) {
+      contribution.liked.push(userId);
+    } else {
+      contribution.liked.splice(likedIndex, 1);
+    }
 
-    // Trigger a Pusher event to notify clients about the liked contribution
+    await contribution.save();
+
+    // Send a Pusher event with the story ID and the updated liked array
     pusherServer.trigger(
-      `story-${storyId}-contributions`, // Use the story ID for the channel
-      "like",
-      { contributionId, liked, likeCount } 
+      `story-${id}-contributions`, 
+      "like", 
+      { contributionId, liked:contribution.liked }
     );
 
-    return new Response("Contribution liked successfully", { status: 200 });
+    // Return a valid JSON response
+    return new Response(
+      JSON.stringify({ 
+        message: "Like status updated successfully",
+        liked: contribution.liked  // Include updated liked status
+      }), 
+      { status: 200 }
+    );
   } catch (err) {
     console.error(err);
-    return new Response("Failed to like contribution", { status: 500 });
+    return new Response("Failed to update like status", { status: 500 });
   }
 };
-
