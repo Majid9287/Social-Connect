@@ -10,7 +10,6 @@ export const POST = async (req) => {
     await connectToDB();
 
     const data = await req.formData();
-    console.log(data)
     // Extract story data from form data
     const title = data.get("title");
     const content = data.get("content");

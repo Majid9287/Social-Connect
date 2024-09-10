@@ -16,7 +16,6 @@ export const DELETE = async (req, { params }) => {
     }
     await Contribution.deleteMany({ story: id }); 
     const authorId = story.author._id;
-    console.log(authorId)
     await User.findByIdAndUpdate(
       authorId,
       { $pull: { stories: id } }

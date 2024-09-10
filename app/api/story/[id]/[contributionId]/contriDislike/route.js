@@ -8,7 +8,6 @@ export const PUT = async (req, { params }) => {
     const { id,contributionId } = params;
     const data = await req.formData();
     const userId = data.get("userId");
-     console.log(id, contributionId,userId )
     const contribution = await Contribution.findById(contributionId);
 
     if (!contribution) {

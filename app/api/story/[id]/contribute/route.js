@@ -10,8 +10,7 @@ export const POST = async (req, { params }) => {
     const data = await req.formData();
     const content = data.get("content");
     const authorId = data.get("authorId");
-    const { id } = params; // Extract id from params
-console.log(content,authorId,id)
+    const { id } = params; 
     const story = await Story.findById(id);
     if (!story) {
       return new Response("Story not found", { status: 404 });

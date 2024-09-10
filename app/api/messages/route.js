@@ -11,7 +11,6 @@ export const POST = async (req) => {
     const body = await req.json();
 
     const { chatId, currentUserId, text, photo } = body;
-console.log( chatId, currentUserId, text, photo)
     const currentUser = await User.findById(currentUserId);
 
     const newMessage = await Message.create({

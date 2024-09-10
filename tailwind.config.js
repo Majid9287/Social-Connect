@@ -203,7 +203,7 @@ module.exports = {
         "dark-1": "#121212",
         "dark-2": "#34303E",
         "blue-1": "#016FD5",
-
+        "white-1": "#ffffff",
 
         "blue-1": "#0A065C",
         "blue-2": "#F5F7FB",

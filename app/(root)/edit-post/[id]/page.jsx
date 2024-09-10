@@ -39,7 +39,9 @@ const EditPost = () => {
   }
 
   console.log(postInfo)
-  return  (
+  return loading ? (
+    <Loader />
+  ) : (
     <div className="pt-6">
       <Posting post={postInfo} apiEndpoint={`/api/post/${id}`}/>
     </div>

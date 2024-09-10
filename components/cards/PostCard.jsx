@@ -14,19 +14,25 @@ import { useEffect, useState } from "react";
 import { CommentList } from "./CommentList";
 import { pusherClient } from "@lib/pusher";
 import CommentForm from "../form/CommentForm";
+
 const PostCard = ({ post, creator, loggedInUser, update }) => {
   const [userData, setUserData] = useState({});
-
   const [loading, setLoading] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState([]);
-  const [ isLiked, setisLiked] = useState( post.likes.find((item) => item == userData?._id));
-  const [isSaved,setisSaved] =useState( userData?.savedPosts?.find((item) => item._id === post._id))
+  const [isLiked, setIsLiked] = useState(
+    post.likes.includes(userData?._id)
+  );
+  const [isSaved, setIsSaved] = useState(
+    userData?.savedPosts?.some((item) => item._id === post._id)
+  );
+  const [likes, setLikes] = useState(post.likes);
+
   const getUser = async () => {
-    const response = await fetch(`/api/user/${loggedInUser.id}`);
+    const response = await fetch(`/api/user/${loggedInUser?.id}`);
     const data = await response.json();
-    setisLiked( post.likes.find((item) => item == data?._id))
-    setisSaved(data?.savedPosts?.find((item) => item._id === post._id))
+    setIsLiked(post.likes.includes(data?._id));
+    setIsSaved(data?.savedPosts?.some((item) => item._id === post._id));
     setUserData(data);
   };
 
@@ -34,10 +40,8 @@ const PostCard = ({ post, creator, loggedInUser, update }) => {
     getUser();
   }, []);
 
-
-  
   const handleSave = async () => {
-    setisSaved(!isSaved)
+    setIsSaved(!isSaved);
     const response = await fetch(
       `/api/user/${loggedInUser.id}/save/${post._id}`,
       {
@@ -53,7 +57,15 @@ const PostCard = ({ post, creator, loggedInUser, update }) => {
   };
 
   const handleLike = async () => {
-    setisLiked(!isLiked)
+    const newIsLiked = !isLiked;
+    const newLikes = newIsLiked
+      ? [...likes, userData?._id]
+      : likes.filter((id) => id !== userData?._id);
+
+    // Optimistically update the UI
+    setIsLiked(newIsLiked);
+    setLikes(newLikes);
+
     try {
       const response = await fetch(
         `/api/post/${post._id}/${userData?._id}/likePost/`,
@@ -64,19 +76,24 @@ const PostCard = ({ post, creator, loggedInUser, update }) => {
           },
         }
       );
-      if (response.ok) {
-        // Handle success
-        //  update(); // Refresh data after show operation
+
+      if (!response.ok) {
+        // Revert the UI changes if the API call fails
+        setIsLiked(!newIsLiked);
+        setLikes(likes);
+        console.error("Failed to update like");
       } else {
-        console.error("Failed to show contribution");
+        update(); // Refresh data after successful operation
       }
     } catch (error) {
-      console.error("Error showing contribution:", error);
+      // Revert the UI changes if there is an error
+      setIsLiked(!newIsLiked);
+      setLikes(likes);
+      console.error("Error updating like:", error);
     }
   };
 
   const handleDelete = async () => {
-  
     await fetch(`/api/post/${post._id}/${userData._id}`, {
       method: "DELETE",
     });
@@ -86,6 +103,7 @@ const PostCard = ({ post, creator, loggedInUser, update }) => {
   const toggleComments = () => {
     setShowComments(!showComments); // Toggle comment visibility
   };
+
   const handleAddComment = async (content, parentId) => {
     try {
       const res = await fetch(`/api/comments`, {
@@ -109,13 +127,13 @@ const PostCard = ({ post, creator, loggedInUser, update }) => {
       console.error(error);
     }
   };
+
   useEffect(() => {
     const commentChannel = pusherClient.subscribe(`post-${post?._id}-comments`);
     const likeChannel = pusherClient.subscribe(`comment-${post?._id}-liked`);
     const PostlikeChannel = pusherClient.subscribe(`post-${post?._id}-liked`);
     PostlikeChannel.bind("like", ({ id, liked }) => {
       console.log("puser like");
-     update();
     });
 
     const deleteChannel = pusherClient.subscribe(
@@ -211,6 +229,7 @@ const PostCard = ({ post, creator, loggedInUser, update }) => {
       setLoading(false);
     }
   };
+
   return (
     <>
       <div className="w-full mb-2 rounded-lg flex flex-col gap-4 bg-dark-1 p-5 max-sm:gap-2">
@@ -235,7 +254,7 @@ const PostCard = ({ post, creator, loggedInUser, update }) => {
             </div>
           </Link>
 
-          {loggedInUser.id === creator.clerkId && (
+          {loggedInUser?.id === creator?.clerkId && (
             <Link href={`/edit-post/${post._id}`}>
               <BorderColor sx={{ color: "white", cursor: "pointer" }} />
             </Link>
@@ -277,37 +296,37 @@ const PostCard = ({ post, creator, loggedInUser, update }) => {
             {isLiked ? (
               <Favorite
                 sx={{ color: "red", cursor: "pointer" }}
-                onClick={() => handleLike()}
+                onClick={handleLike}
               />
             ) : (
               <FavoriteBorder
                 sx={{ color: "white", cursor: "pointer" }}
-                onClick={() => handleLike()}
+                onClick={handleLike}
               />
             )}
-            <p className="text-light-1">{post.likes.length}</p>
+            <p className="text-light-1">{likes.length}</p>
           </div>
           <Comment
             sx={{ color: "white", cursor: "pointer" }}
             onClick={toggleComments}
           />{" "}
           {/* Comment icon */}
-          {loggedInUser.id !== creator.clerkId &&
+          {loggedInUser?.id !== creator?.clerkId &&
             (isSaved ? (
               <Bookmark
                 sx={{ color: "purple", cursor: "pointer" }}
-                onClick={() => handleSave()}
+                onClick={handleSave}
               />
             ) : (
               <BookmarkBorder
                 sx={{ color: "white", cursor: "pointer" }}
-                onClick={() => handleSave()}
+                onClick={handleSave}
               />
             ))}
-          {loggedInUser.id === creator.clerkId && (
+          {loggedInUser?.id === creator?.clerkId && (
             <Delete
               sx={{ color: "white", cursor: "pointer" }}
-              onClick={() => handleDelete()}
+              onClick={handleDelete}
             />
           )}
         </div>

@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import React from "react";
 import { FilterAlt,MapsUgc, SwapVert} from "@mui/icons-material";
 import { useRouter } from 'next/navigation'
-
+import SkeletonStoryCard from "@components/skeletons/SkeletonPostCard";
 import { pusherClient } from "@lib/pusher";
 const Home = () => {
 
@@ -78,7 +78,14 @@ const Home = () => {
     };
   }, []); 
   return loading ? (
-    <Loader />
+    <>
+    <SkeletonStoryCard />
+    <SkeletonStoryCard />
+    <SkeletonStoryCard />
+    <SkeletonStoryCard />
+    <SkeletonStoryCard />
+    <SkeletonStoryCard />
+  </>
   ) : (
     <div className="flex flex-col  ">
       <section className=" ">

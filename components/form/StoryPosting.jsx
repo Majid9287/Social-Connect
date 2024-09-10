@@ -27,7 +27,7 @@ console.log("story",story)
       formData.append("content", content);
       formData.append("visibility", data.visibility);
       formData.append("authorId", data.authorId);
-
+       console.log(data.title,content,data.visibility,data.authorId)
       const response = await fetch(apiEndpoint, {
         method: "POST",
         body: formData,
@@ -94,7 +94,7 @@ console.log("story",story)
 
       <button
         type="submit"
-        className="py-2.5 rounded-lg mt-10 bg-purple-1 hover:bg-pink-1 text-light-1"
+        className="py-2.5 rounded-lg mt-10 bg-purple-1 text-light-1"
         disabled={loading}
       >
         {loading ? "Submitting..." : "Publish"}

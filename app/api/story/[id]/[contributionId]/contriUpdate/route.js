@@ -9,10 +9,8 @@ export const POST = async (req, { body, params }) => {
     const data = await req.formData();
     
     const content = data.get("content");
-    console.log("sws",id,content)
     const updatedContribution = await Contribution.findById(contributionId);
     if (!updatedContribution) {
-      console.log("Contribution not found")
       return new Response("Contribution not found", { status: 404 });
     }
 

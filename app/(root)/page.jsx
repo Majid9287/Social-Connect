@@ -6,6 +6,8 @@ import { FilterAlt, MapsUgc } from "@mui/icons-material";
 import StoryCard from "@components/cards/StoryCard";
 import PostCard from "@components/cards/PostCard";
 import Loader from "@components/Loader";
+import SkeletonStoryCard from "@components/skeletons/SkeletonStoryCard";  // Import SkeletonStoryCard
+import SkeletonPostCard from "@components/skeletons/SkeletonPostCard";  // Import SkeletonPostCard
 
 import { pusherClient } from "@lib/pusher";
 import { useUser } from "@clerk/nextjs";
@@ -40,11 +42,10 @@ const Home = () => {
   };
 
   const getFeedPost = async () => {
-    setLoading(true);
+    
     const response = await fetch("/api/post");
     const data = await response.json();
     setFeedPost(data);
-    setLoading(false);
   };
   useEffect(() => {
     getUser();
@@ -104,7 +105,7 @@ const Home = () => {
   }, []); 
 
   
-  return isLoaded ? (
+  return  (
     <div className="flex flex-col  ">
       <section className=" ">
         <div className="flex justify-between">
@@ -178,19 +179,28 @@ const Home = () => {
             </button>{" "}
           </div>
           <div className="flex  gap-2">
-            {feedStory.map((story, index) => (
-              <StoryCard
-                key={story?._id}
-                link={story?._id}
-                userImage={story.author?.profilePhoto}
-                userName={story?.author.username}
-                date={story?.createdAt}
-                title={story?.title}
-                totalContributions={story?.contributions.length}
-                totalLikes={story?.liked}
-                totalViews={story?.totalViews}
-              />
-            ))}{" "}
+            {loading  ? (
+              // Render SkeletonStoryCards while loading
+              <>
+                <SkeletonStoryCard />
+                <SkeletonStoryCard />
+                <SkeletonStoryCard />
+              </>
+            ) : (
+              feedStory.map((story, index) => (
+                <StoryCard
+                  key={story?._id}
+                  link={story?._id}
+                  userImage={story.author?.profilePhoto}
+                  userName={story?.author.username}
+                  date={story?.createdAt}
+                  title={story?.title}
+                  totalContributions={story?.contributions.length}
+                  totalLikes={story?.liked}
+                  totalViews={story?.totalViews}
+                />
+              ))
+            )}{" "}
           </div>
           {feedStory.length > 9 && (
             <div className="flex justify-center items-center ">
@@ -206,18 +216,25 @@ const Home = () => {
       <h1 className="mb-2 text-heading2-bold max-sm:text-heading3-bold text-light-1">
         Feed
       </h1>
-      {feedPost.map((post) => (
-        <PostCard
-          key={post._id}
-          post={post}
-          creator={post.creator}
-          loggedInUser={user}
-          update={getFeedPost}
-        />
-      ))}
+      {loading ? (
+        // Render SkeletonPostCards while loading
+        <>
+          <SkeletonPostCard />
+          <SkeletonPostCard />
+        </>
+      ) : (
+        feedPost.map((post) => (
+          <PostCard
+            key={post._id}
+            post={post}
+            creator={post.creator}
+            loggedInUser={user}
+            update={getFeedPost}
+          />
+        ))
+      )}
     </div>
-  ) : (
-    <Loader />
+
   );
 };
 

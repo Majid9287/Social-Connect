@@ -10,7 +10,6 @@ export const POST = async (req,{params}) => {
 
     const { commentId,postId } =  params;
     const { userId } = body;
-    console.log(commentId );
     // Find the comment by ID
     const comment = await Comment.findById(commentId);
 

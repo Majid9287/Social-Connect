@@ -50,7 +50,9 @@ console.log(userData)
     visibility: Data.visibility,
   };
 
-  return (
+  return loading || !isLoaded ? (
+    <Loader />
+  ) : (
     <div className="pt-6">
       <Posting story={postData} apiEndpoint={`/api/story/${id}/storyUpdate`} />
     </div>

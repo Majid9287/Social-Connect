@@ -7,7 +7,6 @@ export const DELETE = async (req, { params }) => {
   try {
     await connectToDB();
     const { id, contributionId } = params; 
-    console.log(id, contributionId )
     const contribution = await Contribution.findById(contributionId);
     if (!contribution) {
       return new Response("Contribution not found", { status: 404 });

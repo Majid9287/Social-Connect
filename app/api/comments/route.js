@@ -11,7 +11,6 @@ export const POST = async (req) => {
     const body = await req.json();
 
     const { postId, parentId, content, userId } = body;
-    console.log(postId, parentId, content, userId )
 
     let newComment;
 

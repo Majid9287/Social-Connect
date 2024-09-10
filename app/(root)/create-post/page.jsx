@@ -32,7 +32,9 @@ const CreatePost = () => {
     postMedia: { url: null, type: "" }, 
   };
 
-  return (
+  return loading || !isLoaded ? (
+    <Loader />
+  ) : (
     <div className="pt-6">
       <Posting post={postData} apiEndpoint={"/api/post/new"} />
     </div>
